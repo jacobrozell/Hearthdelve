@@ -1,0 +1,14 @@
+{
+  "room": "m0_cellar",
+  "depth": 1,
+  "melee": "sword",
+  "ranged": "bow",
+  "relics": [
+    "ember_flask",
+    "lantern_ward"
+  ],
+  "tactics": "m0_default",
+  "fodder": "moss_slime",
+  "brute": "cellar_cyclops",
+  "shooter": "cellar_bat"
+}

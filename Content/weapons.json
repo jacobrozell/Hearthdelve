@@ -1,0 +1,11 @@
+[
+  {"id": "sword", "name": "Sword", "kind": "melee", "rangeTiles": 1, "attacksPerSecond": 1.0, "innate": {"kind": "cleaveEvery", "hits": 3}, "sprite": "weapon.sword"},
+  {"id": "hammer", "name": "Hammer", "kind": "melee", "rangeTiles": 1, "attacksPerSecond": 0.7, "innate": {"kind": "stunEvery", "hits": 4, "seconds": 1}, "sprite": "weapon.hammer"},
+  {"id": "daggers", "name": "Daggers", "kind": "melee", "rangeTiles": 1, "attacksPerSecond": 1.8, "innate": {"kind": "critChance", "chance": 0.15}, "sprite": "weapon.daggers"},
+  {"id": "spear", "name": "Spear", "kind": "melee", "rangeTiles": 2, "attacksPerSecond": 1.1, "innate": {"kind": "pierce", "enemies": 1}, "sprite": "weapon.spear"},
+  {"id": "scythe", "name": "Scythe", "kind": "melee", "rangeTiles": 1.5, "attacksPerSecond": 0.9, "innate": {"kind": "arcHeal", "fraction": 0.03}, "sprite": "weapon.scythe"},
+  {"id": "bow", "name": "Bow", "kind": "ranged", "rangeTiles": 8, "attacksPerSecond": 0.9, "innate": {"kind": "chargedEvery", "shots": 3, "bonus": 1}, "sprite": "weapon.bow", "projectile": "weapon.arrow"},
+  {"id": "crossbow", "name": "Crossbow", "kind": "ranged", "rangeTiles": 7, "attacksPerSecond": 1.5, "innate": {"kind": "pierceBolts"}, "sprite": "weapon.crossbow", "projectile": "fx.bolt.hero"},
+  {"id": "wand", "name": "Wand", "kind": "ranged", "rangeTiles": 6, "attacksPerSecond": 1.2, "innate": {"kind": "homing"}, "sprite": "weapon.wand", "projectile": "fx.bolt.hero"},
+  {"id": "sling", "name": "Sling", "kind": "ranged", "rangeTiles": 6, "attacksPerSecond": 1.3, "innate": {"kind": "ricochet", "targets": 1}, "sprite": "weapon.sling", "projectile": "fx.bolt.hero"}
+]

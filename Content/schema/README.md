@@ -1,0 +1,5 @@
+Catalogs: `weapons`, `relics` (30, five per element), `charms` (24), `uniques` (60), `sets` (6×4), `families` (15), `mobs` (60), `guardians` (15), `wardens` (2), `wanderers` (12), `modifiers`, `affixes`, `tactics`, `loadouts` (reference builds), `tuning`, and `rooms/*.json` (Tiled exports). `m0.json` lists the ids the one-room slice uses. `version` in the save is a hash of every file, so any content edit changes it.
+
+The validator that fails the build is `HearthSimCLI validate --content Content`. It checks references, opcode fields, element coverage (damage, control, and defense per element), the four roles per family, telegraphs of at least 0.6 s, and that every sprite id is in `docs/art/kenney-map.json`. `hd.content` / `missing_definition` means an id points at a row that is not in the catalog. `bad_reference` means an opcode, hook, innate, role, or biome segment is not one the sim knows.
+
+These schemas document the room export and a weapon row. The Swift decoder is the check CI runs.

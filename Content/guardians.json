@@ -1,0 +1,675 @@
+[
+  {
+    "id": "rat_regent",
+    "name": "The Rat Regent",
+    "biome": "mossy_cellars",
+    "family": "cellar_vermin",
+    "sprite": "guardian.rat_regent",
+    "hpMultiplier": 120,
+    "enrageAt": 0.3,
+    "mechanics": [
+      {
+        "id": "gnaw_charge",
+        "name": "Gnaw Charge",
+        "telegraphSeconds": 0.9,
+        "shape": "line",
+        "opcodes": [
+          {
+            "op": "damage",
+            "coefficient": 2.5,
+            "element": "untyped",
+            "radius": 1
+          }
+        ]
+      },
+      {
+        "id": "call_the_nest",
+        "name": "Call the Nest",
+        "telegraphSeconds": 1.2,
+        "shape": "ring",
+        "opcodes": [
+          {
+            "op": "summon",
+            "kind": "grey_rat",
+            "duration": 12,
+            "coefficient": 0.3,
+            "taunts": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mother_ooze",
+    "name": "Mother Ooze",
+    "biome": "mossy_cellars",
+    "family": "cellar_slimes",
+    "sprite": "guardian.mother_ooze",
+    "hpMultiplier": 120,
+    "enrageAt": 0.3,
+    "mechanics": [
+      {
+        "id": "belly_flop",
+        "name": "Belly Flop",
+        "telegraphSeconds": 1.0,
+        "shape": "circle",
+        "opcodes": [
+          {
+            "op": "damage",
+            "coefficient": 3.0,
+            "element": "nature",
+            "radius": 2.5
+          }
+        ]
+      },
+      {
+        "id": "bog_puddles",
+        "name": "Bog Puddles",
+        "telegraphSeconds": 0.8,
+        "shape": "circle",
+        "opcodes": [
+          {
+            "op": "zone",
+            "coefficient": 0.4,
+            "element": "nature",
+            "radius": 1.5,
+            "duration": 5
+          }
+        ]
+      },
+      {
+        "id": "split_off",
+        "name": "Split Off",
+        "telegraphSeconds": 1.2,
+        "shape": "ring",
+        "opcodes": [
+          {
+            "op": "summon",
+            "kind": "slimelet",
+            "duration": 15,
+            "coefficient": 0.3,
+            "taunts": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "old_lintel",
+    "name": "Old Lintel",
+    "biome": "mossy_cellars",
+    "family": "rubble_folk",
+    "sprite": "guardian.old_lintel",
+    "hpMultiplier": 120,
+    "enrageAt": 0.3,
+    "mechanics": [
+      {
+        "id": "ceiling_drop",
+        "name": "Ceiling Drop",
+        "telegraphSeconds": 1.0,
+        "shape": "square",
+        "opcodes": [
+          {
+            "op": "damage",
+            "coefficient": 3.5,
+            "element": "untyped",
+            "radius": 1.5
+          }
+        ]
+      },
+      {
+        "id": "rubble_ring",
+        "name": "Rubble Ring",
+        "telegraphSeconds": 0.9,
+        "shape": "ring",
+        "opcodes": [
+          {
+            "op": "root",
+            "radius": 3,
+            "duration": 1.2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "the_bloom",
+    "name": "The Bloom",
+    "biome": "fungal_hollows",
+    "family": "sporelings",
+    "sprite": "guardian.the_bloom",
+    "hpMultiplier": 120,
+    "enrageAt": 0.3,
+    "mechanics": [
+      {
+        "id": "spore_burst",
+        "name": "Spore Burst",
+        "telegraphSeconds": 0.9,
+        "shape": "circle",
+        "opcodes": [
+          {
+            "op": "zone",
+            "coefficient": 0.5,
+            "element": "nature",
+            "radius": 3,
+            "duration": 4
+          }
+        ]
+      },
+      {
+        "id": "mycelial_grasp",
+        "name": "Mycelial Grasp",
+        "telegraphSeconds": 0.8,
+        "shape": "star",
+        "opcodes": [
+          {
+            "op": "root",
+            "radius": 2,
+            "duration": 1.5
+          }
+        ]
+      },
+      {
+        "id": "cap_slam",
+        "name": "Cap Slam",
+        "telegraphSeconds": 1.1,
+        "shape": "circle",
+        "opcodes": [
+          {
+            "op": "damage",
+            "coefficient": 3.2,
+            "element": "nature",
+            "radius": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "widow_of_threads",
+    "name": "Widow of Threads",
+    "biome": "fungal_hollows",
+    "family": "hollow_spiders",
+    "sprite": "guardian.widow_of_threads",
+    "hpMultiplier": 120,
+    "enrageAt": 0.3,
+    "mechanics": [
+      {
+        "id": "web_line",
+        "name": "Web Line",
+        "telegraphSeconds": 0.8,
+        "shape": "line",
+        "opcodes": [
+          {
+            "op": "root",
+            "radius": 1,
+            "duration": 2
+          }
+        ]
+      },
+      {
+        "id": "brood_burst",
+        "name": "Brood Burst",
+        "telegraphSeconds": 1.2,
+        "shape": "ring",
+        "opcodes": [
+          {
+            "op": "summon",
+            "kind": "spiderling",
+            "duration": 12,
+            "coefficient": 0.3,
+            "taunts": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "great_glowgrub",
+    "name": "The Great Glowgrub",
+    "biome": "fungal_hollows",
+    "family": "glowgrubs",
+    "sprite": "guardian.great_glowgrub",
+    "hpMultiplier": 120,
+    "enrageAt": 0.3,
+    "mechanics": [
+      {
+        "id": "dazzle",
+        "name": "Dazzle",
+        "telegraphSeconds": 0.9,
+        "shape": "cone",
+        "opcodes": [
+          {
+            "op": "stun",
+            "radius": 2.5,
+            "duration": 1
+          }
+        ]
+      },
+      {
+        "id": "burrow_quake",
+        "name": "Burrow Quake",
+        "telegraphSeconds": 1.2,
+        "shape": "ring",
+        "opcodes": [
+          {
+            "op": "damage",
+            "coefficient": 3.0,
+            "element": "untyped",
+            "radius": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "headmistress_quill",
+    "name": "Headmistress Quill",
+    "biome": "drowned_library",
+    "family": "page_ghosts",
+    "sprite": "guardian.headmistress_quill",
+    "hpMultiplier": 120,
+    "enrageAt": 0.3,
+    "mechanics": [
+      {
+        "id": "hush",
+        "name": "Hush",
+        "telegraphSeconds": 0.9,
+        "shape": "circle",
+        "opcodes": [
+          {
+            "op": "stun",
+            "radius": 3,
+            "duration": 1
+          }
+        ]
+      },
+      {
+        "id": "flying_pages",
+        "name": "Flying Pages",
+        "telegraphSeconds": 0.7,
+        "shape": "line",
+        "opcodes": [
+          {
+            "op": "damage",
+            "coefficient": 2.0,
+            "element": "shadow",
+            "radius": 1
+          }
+        ]
+      },
+      {
+        "id": "overdue",
+        "name": "Overdue",
+        "telegraphSeconds": 1.2,
+        "shape": "ring",
+        "opcodes": [
+          {
+            "op": "zone",
+            "coefficient": 0.4,
+            "element": "shadow",
+            "radius": 2,
+            "duration": 4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "brinejaw",
+    "name": "Brinejaw",
+    "biome": "drowned_library",
+    "family": "inkcrabs",
+    "sprite": "guardian.brinejaw",
+    "hpMultiplier": 120,
+    "enrageAt": 0.3,
+    "mechanics": [
+      {
+        "id": "pincer_sweep",
+        "name": "Pincer Sweep",
+        "telegraphSeconds": 0.9,
+        "shape": "cone",
+        "opcodes": [
+          {
+            "op": "damage",
+            "coefficient": 3.0,
+            "element": "untyped",
+            "radius": 2
+          }
+        ]
+      },
+      {
+        "id": "ink_tide",
+        "name": "Ink Tide",
+        "telegraphSeconds": 1.1,
+        "shape": "circle",
+        "opcodes": [
+          {
+            "op": "zone",
+            "coefficient": 0.4,
+            "element": "frost",
+            "radius": 3,
+            "duration": 4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "the_index",
+    "name": "The Index",
+    "biome": "drowned_library",
+    "family": "bookworms",
+    "sprite": "guardian.the_index",
+    "hpMultiplier": 120,
+    "enrageAt": 0.3,
+    "mechanics": [
+      {
+        "id": "cross_reference",
+        "name": "Cross Reference",
+        "telegraphSeconds": 0.8,
+        "shape": "diamond",
+        "opcodes": [
+          {
+            "op": "damage",
+            "coefficient": 2.6,
+            "element": "radiant",
+            "radius": 1.5
+          }
+        ]
+      },
+      {
+        "id": "bind",
+        "name": "Bind",
+        "telegraphSeconds": 1.0,
+        "shape": "ring",
+        "opcodes": [
+          {
+            "op": "root",
+            "radius": 3,
+            "duration": 1.5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreman_cinder",
+    "name": "Foreman Cinder",
+    "biome": "ember_forges",
+    "family": "cinder_imps",
+    "sprite": "guardian.foreman_cinder",
+    "hpMultiplier": 120,
+    "enrageAt": 0.3,
+    "mechanics": [
+      {
+        "id": "spark_shower",
+        "name": "Spark Shower",
+        "telegraphSeconds": 0.8,
+        "shape": "circle",
+        "opcodes": [
+          {
+            "op": "zone",
+            "coefficient": 0.5,
+            "element": "fire",
+            "radius": 2,
+            "duration": 3
+          }
+        ]
+      },
+      {
+        "id": "hex_brand",
+        "name": "Hex Brand",
+        "telegraphSeconds": 1.0,
+        "shape": "triangle",
+        "opcodes": [
+          {
+            "op": "damage",
+            "coefficient": 3.0,
+            "element": "fire",
+            "radius": 1.5
+          }
+        ]
+      },
+      {
+        "id": "whistle",
+        "name": "Shift Whistle",
+        "telegraphSeconds": 1.2,
+        "shape": "ring",
+        "opcodes": [
+          {
+            "op": "summon",
+            "kind": "sparklet",
+            "duration": 12,
+            "coefficient": 0.3,
+            "taunts": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "crucible",
+    "name": "The Crucible",
+    "biome": "ember_forges",
+    "family": "slag_golems",
+    "sprite": "guardian.crucible",
+    "hpMultiplier": 120,
+    "enrageAt": 0.3,
+    "mechanics": [
+      {
+        "id": "pour",
+        "name": "Pour",
+        "telegraphSeconds": 1.1,
+        "shape": "line",
+        "opcodes": [
+          {
+            "op": "zone",
+            "coefficient": 0.6,
+            "element": "fire",
+            "radius": 1,
+            "duration": 5
+          }
+        ]
+      },
+      {
+        "id": "slag_stomp",
+        "name": "Slag Stomp",
+        "telegraphSeconds": 1.0,
+        "shape": "circle",
+        "opcodes": [
+          {
+            "op": "damage",
+            "coefficient": 3.6,
+            "element": "fire",
+            "radius": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "great_bellows",
+    "name": "The Great Bellows",
+    "biome": "ember_forges",
+    "family": "bellows_bats",
+    "sprite": "guardian.great_bellows",
+    "hpMultiplier": 120,
+    "enrageAt": 0.3,
+    "mechanics": [
+      {
+        "id": "gust",
+        "name": "Gust",
+        "telegraphSeconds": 0.9,
+        "shape": "cone",
+        "opcodes": [
+          {
+            "op": "stun",
+            "radius": 2.5,
+            "duration": 0.8
+          }
+        ]
+      },
+      {
+        "id": "ember_gale",
+        "name": "Ember Gale",
+        "telegraphSeconds": 1.0,
+        "shape": "cone",
+        "opcodes": [
+          {
+            "op": "damage",
+            "coefficient": 2.8,
+            "element": "fire",
+            "radius": 2.5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "hollow_king",
+    "name": "The Hollow King",
+    "biome": "starless_vault",
+    "family": "vault_shades",
+    "sprite": "guardian.hollow_king",
+    "hpMultiplier": 120,
+    "enrageAt": 0.3,
+    "mechanics": [
+      {
+        "id": "null_edict",
+        "name": "Null Edict",
+        "telegraphSeconds": 1.0,
+        "shape": "square",
+        "opcodes": [
+          {
+            "op": "damage",
+            "coefficient": 3.4,
+            "element": "shadow",
+            "radius": 2
+          }
+        ]
+      },
+      {
+        "id": "court_of_shades",
+        "name": "Court of Shades",
+        "telegraphSeconds": 1.2,
+        "shape": "ring",
+        "opcodes": [
+          {
+            "op": "summon",
+            "kind": "shadeling",
+            "duration": 12,
+            "coefficient": 0.3,
+            "taunts": false
+          }
+        ]
+      },
+      {
+        "id": "dimming",
+        "name": "Dimming",
+        "telegraphSeconds": 0.9,
+        "shape": "circle",
+        "opcodes": [
+          {
+            "op": "zone",
+            "coefficient": 0.4,
+            "element": "shadow",
+            "radius": 3,
+            "duration": 4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "moon_moth",
+    "name": "The Moon Moth",
+    "biome": "starless_vault",
+    "family": "starmoths",
+    "sprite": "guardian.moon_moth",
+    "hpMultiplier": 120,
+    "enrageAt": 0.3,
+    "mechanics": [
+      {
+        "id": "eclipse",
+        "name": "Eclipse",
+        "telegraphSeconds": 1.1,
+        "shape": "circle",
+        "opcodes": [
+          {
+            "op": "stun",
+            "radius": 3,
+            "duration": 1
+          }
+        ]
+      },
+      {
+        "id": "comet_dust",
+        "name": "Comet Dust",
+        "telegraphSeconds": 0.8,
+        "shape": "star",
+        "opcodes": [
+          {
+            "op": "damage",
+            "coefficient": 2.6,
+            "element": "radiant",
+            "radius": 1.5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "grand_orrery",
+    "name": "The Grand Orrery",
+    "biome": "starless_vault",
+    "family": "clockwork_watch",
+    "sprite": "guardian.grand_orrery",
+    "hpMultiplier": 120,
+    "enrageAt": 0.3,
+    "mechanics": [
+      {
+        "id": "orbit",
+        "name": "Orbit",
+        "telegraphSeconds": 0.9,
+        "shape": "ring",
+        "opcodes": [
+          {
+            "op": "damage",
+            "coefficient": 3.0,
+            "element": "radiant",
+            "radius": 3
+          }
+        ]
+      },
+      {
+        "id": "stopped_clock",
+        "name": "Stopped Clock",
+        "telegraphSeconds": 1.0,
+        "shape": "circle",
+        "opcodes": [
+          {
+            "op": "root",
+            "radius": 2.5,
+            "duration": 1.5
+          }
+        ]
+      },
+      {
+        "id": "wind_up",
+        "name": "Wind Up",
+        "telegraphSeconds": 1.2,
+        "shape": "ring",
+        "opcodes": [
+          {
+            "op": "summon",
+            "kind": "tick_swarm",
+            "duration": 12,
+            "coefficient": 0.3,
+            "taunts": false
+          }
+        ]
+      }
+    ]
+  }
+]

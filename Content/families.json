@@ -1,0 +1,17 @@
+[
+  {"id": "cellar_vermin", "name": "Cellar Vermin", "biome": "mossy_cellars"},
+  {"id": "cellar_slimes", "name": "Cellar Slimes", "biome": "mossy_cellars"},
+  {"id": "rubble_folk", "name": "Rubble Folk", "biome": "mossy_cellars"},
+  {"id": "sporelings", "name": "Sporelings", "biome": "fungal_hollows"},
+  {"id": "hollow_spiders", "name": "Hollow Spiders", "biome": "fungal_hollows"},
+  {"id": "glowgrubs", "name": "Glowgrubs", "biome": "fungal_hollows"},
+  {"id": "page_ghosts", "name": "Page Ghosts", "biome": "drowned_library"},
+  {"id": "inkcrabs", "name": "Inkcrabs", "biome": "drowned_library"},
+  {"id": "bookworms", "name": "Bookworms", "biome": "drowned_library"},
+  {"id": "cinder_imps", "name": "Cinder Imps", "biome": "ember_forges"},
+  {"id": "slag_golems", "name": "Slag Golems", "biome": "ember_forges"},
+  {"id": "bellows_bats", "name": "Bellows Bats", "biome": "ember_forges"},
+  {"id": "vault_shades", "name": "Vault Shades", "biome": "starless_vault"},
+  {"id": "starmoths", "name": "Starmoths", "biome": "starless_vault"},
+  {"id": "clockwork_watch", "name": "Clockwork Watch", "biome": "starless_vault"}
+]

@@ -1,0 +1,187 @@
+[
+  {
+    "id": "m0_default",
+    "name": "Cellar Basics",
+    "rules": [
+      {
+        "if": {
+          "kind": "selfHPBelow",
+          "value": 0.35
+        },
+        "then": {
+          "kind": "potion"
+        }
+      },
+      {
+        "if": {
+          "kind": "eliteWithin",
+          "tiles": 4
+        },
+        "then": {
+          "kind": "relic",
+          "relic": "lantern_ward"
+        }
+      },
+      {
+        "if": {
+          "kind": "enemiesWithin",
+          "count": 3,
+          "tiles": 3
+        },
+        "then": {
+          "kind": "relic",
+          "relic": "ember_flask"
+        }
+      }
+    ]
+  },
+  {
+    "id": "ember_bruiser",
+    "name": "Burn It Down",
+    "rules": [
+      {
+        "if": {
+          "kind": "selfHPBelow",
+          "value": 0.35
+        },
+        "then": {
+          "kind": "potion"
+        }
+      },
+      {
+        "if": {
+          "kind": "eliteWithin",
+          "tiles": 4
+        },
+        "then": {
+          "kind": "relic",
+          "relic": "lantern_ward"
+        }
+      },
+      {
+        "if": {
+          "kind": "enemiesWithin",
+          "count": 3,
+          "tiles": 2
+        },
+        "then": {
+          "kind": "relic",
+          "relic": "root_snare"
+        }
+      },
+      {
+        "if": {
+          "kind": "enemiesWithin",
+          "count": 3,
+          "tiles": 3
+        },
+        "then": {
+          "kind": "relic",
+          "relic": "ember_flask"
+        }
+      }
+    ]
+  },
+  {
+    "id": "hound_warden",
+    "name": "Let the Hound Lead",
+    "rules": [
+      {
+        "if": {
+          "kind": "selfHPBelow",
+          "value": 0.4
+        },
+        "then": {
+          "kind": "relic",
+          "relic": "hearthbread_totem"
+        }
+      },
+      {
+        "if": {
+          "kind": "selfHPBelow",
+          "value": 0.3
+        },
+        "then": {
+          "kind": "potion"
+        }
+      },
+      {
+        "if": {
+          "kind": "enemiesWithin",
+          "count": 1,
+          "tiles": 6
+        },
+        "then": {
+          "kind": "relic",
+          "relic": "briar_hound"
+        }
+      },
+      {
+        "if": {
+          "kind": "enemiesWithin",
+          "count": 2,
+          "tiles": 2
+        },
+        "then": {
+          "kind": "relic",
+          "relic": "root_snare"
+        }
+      },
+      {
+        "if": {
+          "kind": "targetBeyond",
+          "tiles": 3
+        },
+        "then": {
+          "kind": "ranged"
+        }
+      }
+    ]
+  },
+  {
+    "id": "glass_archer",
+    "name": "Keep Moving",
+    "rules": [
+      {
+        "if": {
+          "kind": "enemiesWithin",
+          "count": 1,
+          "tiles": 1.5
+        },
+        "then": {
+          "kind": "relic",
+          "relic": "blink_feather"
+        }
+      },
+      {
+        "if": {
+          "kind": "selfHPBelow",
+          "value": 0.4
+        },
+        "then": {
+          "kind": "potion"
+        }
+      },
+      {
+        "if": {
+          "kind": "shieldDown"
+        },
+        "then": {
+          "kind": "relic",
+          "relic": "lantern_ward"
+        }
+      },
+      {
+        "if": {
+          "kind": "enemiesWithin",
+          "count": 3,
+          "tiles": 3
+        },
+        "then": {
+          "kind": "relic",
+          "relic": "ember_flask"
+        }
+      }
+    ]
+  }
+]

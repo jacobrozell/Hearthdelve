@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "segments": [
+    {
+      "id": "launch",
+      "fromDepth": 1,
+      "bandWidth": 10,
+      "echoFromDepth": 51,
+      "order": ["mossy_cellars", "fungal_hollows", "drowned_library", "ember_forges", "starless_vault"]
+    }
+  ]
+}

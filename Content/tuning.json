@@ -1,0 +1,45 @@
+{
+  "proposal": true,
+  "combat": {
+    "p0": 10,
+    "hp0": 15,
+    "dmg0": 8,
+    "h0": 100,
+    "critChance": 0.05,
+    "critDamage": 0.5
+  },
+  "heroXP": {
+    "base": 100,
+    "growth": 1.08
+  },
+  "paragonXP": {
+    "base": 1000,
+    "growth": 1.02
+  },
+  "soulRegenPerSecond": 1,
+  "room": {
+    "heroTilesPerSecond": 3.2,
+    "heroReactionSeconds": 0.25,
+    "swapTiles": 3,
+    "fodderTilesPerSecond": 2.0,
+    "bruteTilesPerSecond": 1.2,
+    "rangedTilesPerSecond": 1.6,
+    "projectileTilesPerSecond": 10,
+    "boltTilesPerSecond": 6,
+    "fodderAttackSeconds": 2,
+    "bruteRecoverySeconds": 1.5,
+    "rangedAttackSeconds": 1.8,
+    "bruteHitPoints": 4,
+    "rangedHitPoints": 2,
+    "eliteHitPoints": 3,
+    "bruteDamage": 2.2,
+    "slamRadius": 1.2,
+    "potionHeal": 0.4,
+    "potionCooldown": 8,
+    "potionCharges": 3,
+    "potionRefillPerWave": 1,
+    "startingSouls": 100,
+    "waveDelaySeconds": 2,
+    "championEvery": 3
+  }
+}

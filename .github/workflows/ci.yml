@@ -1,0 +1,23 @@
+name: CI
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test packages
+        run: |
+          set -euo pipefail
+          for package in HearthCore HearthContent HearthPersistence HearthTelemetry HearthSimCLI; do
+            swift test --package-path "Packages/$package"
+          done
+          swift build --package-path Packages/HearthRender
+          swift build --package-path Packages/HearthUI
+          swift build --package-path Packages/HearthAudio
+          swift run --package-path Packages/HearthSimCLI HearthSimCLI validate --content Content
+          swift run --package-path Packages/HearthSimCLI HearthSimCLI tick --seed 1 --ticks 100
+          swift run --package-path Packages/HearthSimCLI HearthSimCLI smoke --content Content
+          swift run --package-path Packages/HearthSimCLI HearthSimCLI room --seed 1 --ticks 900 --taps 40:flask,200:ward --record /tmp/run.json
+          swift run --package-path Packages/HearthSimCLI HearthSimCLI replay --recording /tmp/run.json

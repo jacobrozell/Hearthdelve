@@ -1,0 +1,11 @@
+{
+  "source": "docs/art/palette.gpl",
+  "biomes": {
+    "hearth": ["ink", "shadow", "steel", "mist", "white", "bark", "sand", "wheat", "ember", "amber", "grass", "moss"],
+    "mossy_cellars": ["ink", "shadow", "slate", "steel", "mist", "bark", "clay", "sand", "grass", "moss", "glow", "amber"],
+    "fungal_hollows": ["ink", "shadow", "dusk", "steel", "mist", "clay", "sand", "wheat", "grass", "moss", "spore", "glow"],
+    "drowned_library": ["ink", "shadow", "slate", "dusk", "steel", "mist", "white", "bark", "sand", "wheat", "glow", "amber"],
+    "ember_forges": ["ink", "shadow", "bark", "clay", "copper", "sand", "wheat", "ember", "amber", "red", "brick", "white"],
+    "starless_vault": ["ink", "shadow", "slate", "dusk", "steel", "mist", "white", "glow", "spore", "sand", "grass", "red"]
+  }
+}

@@ -1,0 +1,202 @@
+[
+  {
+    "id": "keeper_of_the_well",
+    "name": "Keeper of the Well",
+    "depth": 50,
+    "sprite": "warden.keeper_of_the_well",
+    "hpMultiplier": 200,
+    "enrageAt": 0.3,
+    "phases": [
+      [
+        {
+          "id": "bucket_drop",
+          "name": "Bucket Drop",
+          "telegraphSeconds": 1.0,
+          "shape": "circle",
+          "opcodes": [
+            {
+              "op": "damage",
+              "coefficient": 3.5,
+              "element": "untyped",
+              "radius": 2
+            }
+          ]
+        },
+        {
+          "id": "rope_snare",
+          "name": "Rope Snare",
+          "telegraphSeconds": 0.9,
+          "shape": "line",
+          "opcodes": [
+            {
+              "op": "root",
+              "radius": 1,
+              "duration": 2
+            }
+          ]
+        }
+      ],
+      [
+        {
+          "id": "well_tide",
+          "name": "Well Tide",
+          "telegraphSeconds": 1.1,
+          "shape": "ring",
+          "opcodes": [
+            {
+              "op": "zone",
+              "coefficient": 0.5,
+              "element": "frost",
+              "radius": 3,
+              "duration": 5
+            }
+          ]
+        },
+        {
+          "id": "echoes",
+          "name": "Echoes",
+          "telegraphSeconds": 1.2,
+          "shape": "ring",
+          "opcodes": [
+            {
+              "op": "summon",
+              "kind": "page_ghost",
+              "duration": 15,
+              "coefficient": 0.4,
+              "taunts": false
+            }
+          ]
+        }
+      ],
+      [
+        {
+          "id": "last_light",
+          "name": "Last Light",
+          "telegraphSeconds": 1.2,
+          "shape": "circle",
+          "opcodes": [
+            {
+              "op": "damage",
+              "coefficient": 5.0,
+              "element": "shadow",
+              "radius": 3
+            }
+          ]
+        },
+        {
+          "id": "darkwater",
+          "name": "Darkwater",
+          "telegraphSeconds": 0.9,
+          "shape": "circle",
+          "opcodes": [
+            {
+              "op": "stun",
+              "radius": 2.5,
+              "duration": 1
+            }
+          ]
+        }
+      ]
+    ]
+  },
+  {
+    "id": "lampless_one",
+    "name": "The Lampless One",
+    "depth": 100,
+    "sprite": "warden.lampless_one",
+    "hpMultiplier": 240,
+    "enrageAt": 0.3,
+    "phases": [
+      [
+        {
+          "id": "snuff",
+          "name": "Snuff",
+          "telegraphSeconds": 1.0,
+          "shape": "circle",
+          "opcodes": [
+            {
+              "op": "damage",
+              "coefficient": 4.0,
+              "element": "shadow",
+              "radius": 2
+            }
+          ]
+        },
+        {
+          "id": "grasping_dark",
+          "name": "Grasping Dark",
+          "telegraphSeconds": 0.9,
+          "shape": "star",
+          "opcodes": [
+            {
+              "op": "root",
+              "radius": 2.5,
+              "duration": 1.5
+            }
+          ]
+        }
+      ],
+      [
+        {
+          "id": "starfall",
+          "name": "Starfall",
+          "telegraphSeconds": 1.1,
+          "shape": "diamond",
+          "opcodes": [
+            {
+              "op": "damage",
+              "coefficient": 3.5,
+              "element": "radiant",
+              "radius": 1.5
+            }
+          ]
+        },
+        {
+          "id": "moth_court",
+          "name": "Moth Court",
+          "telegraphSeconds": 1.2,
+          "shape": "ring",
+          "opcodes": [
+            {
+              "op": "summon",
+              "kind": "moth_cloud",
+              "duration": 15,
+              "coefficient": 0.4,
+              "taunts": false
+            }
+          ]
+        }
+      ],
+      [
+        {
+          "id": "total_dark",
+          "name": "Total Dark",
+          "telegraphSeconds": 1.3,
+          "shape": "ring",
+          "opcodes": [
+            {
+              "op": "zone",
+              "coefficient": 0.6,
+              "element": "shadow",
+              "radius": 4,
+              "duration": 5
+            }
+          ]
+        },
+        {
+          "id": "final_toll",
+          "name": "Final Toll",
+          "telegraphSeconds": 1.0,
+          "shape": "circle",
+          "opcodes": [
+            {
+              "op": "stun",
+              "radius": 3,
+              "duration": 1.2
+            }
+          ]
+        }
+      ]
+    ]
+  }
+]

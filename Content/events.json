@@ -1,0 +1,9 @@
+[
+  {"id": "shrine", "name": "Shrine", "effect": "One of: +25% damage 30 s, 2× move speed 30 s, +50% loot quality this floor", "weight": 30, "fromDepth": 1},
+  {"id": "lantern_shrine", "name": "Lantern Shrine", "effect": "Refills 20% Lantern", "weight": 20, "fromDepth": 1},
+  {"id": "cursed_chest", "name": "Cursed Chest", "effect": "Survive 3 waves in 30 s for a chest with 1 guaranteed Unique roll", "weight": 15, "fromDepth": 5},
+  {"id": "glimmerkin", "name": "Glimmerkin", "effect": "Treasure creature that flees; drops gold and materials if caught", "weight": 10, "fromDepth": 5},
+  {"id": "lost_wanderer", "name": "Lost Wanderer", "effect": "Meet a Wanderer for a small gift; each Wanderer's first rescue is a scripted event at their building's unlock Depth", "weight": 10, "fromDepth": 3},
+  {"id": "campfire", "name": "Campfire", "effect": "Full heal; Charms gain 2 minutes of XP", "weight": 10, "fromDepth": 1},
+  {"id": "glyph_lectern", "name": "Glyph Lectern", "effect": "Learn a random unowned Glyph", "weight": 5, "fromDepth": 15}
+]

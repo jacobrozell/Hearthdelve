@@ -1,0 +1,81 @@
+[
+  {
+    "id": "ember_bruiser",
+    "name": "Ember Bruiser",
+    "melee": "hammer",
+    "ranged": "wand",
+    "relics": [
+      "ember_flask",
+      "lantern_ward",
+      "root_snare"
+    ],
+    "charms": [
+      "ember_heart",
+      "mossback_shell",
+      "soul_jar"
+    ],
+    "uniqueWeapon": "cinderfang",
+    "depths": [
+      1,
+      25,
+      50,
+      100,
+      150,
+      200,
+      300
+    ],
+    "tactics": "ember_bruiser"
+  },
+  {
+    "id": "hound_warden",
+    "name": "Hound Warden",
+    "melee": "spear",
+    "ranged": "bow",
+    "relics": [
+      "briar_hound",
+      "hearthbread_totem",
+      "root_snare"
+    ],
+    "charms": [
+      "hounds_collar",
+      "mossback_shell",
+      "lucky_acorn"
+    ],
+    "depths": [
+      1,
+      25,
+      50,
+      100,
+      150,
+      200,
+      300
+    ],
+    "tactics": "hound_warden"
+  },
+  {
+    "id": "glass_archer",
+    "name": "Glass Archer",
+    "melee": "daggers",
+    "ranged": "crossbow",
+    "relics": [
+      "blink_feather",
+      "ember_flask",
+      "lantern_ward"
+    ],
+    "charms": [
+      "ember_heart",
+      "moth_lantern",
+      "soul_jar"
+    ],
+    "depths": [
+      1,
+      25,
+      50,
+      100,
+      150,
+      200,
+      300
+    ],
+    "tactics": "glass_archer"
+  }
+]

@@ -1,0 +1,476 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		00541BCD0FDFA6E87D1B03BE /* HearthCore in Frameworks */ = {isa = PBXBuildFile; productRef = 31A1AD4EE44C9C6AF569AE6E /* HearthCore */; };
+		2519678DB87A6C89FF48D872 /* HearthTelemetry in Frameworks */ = {isa = PBXBuildFile; productRef = 4DCD87C74A7D799EA8DC4B78 /* HearthTelemetry */; };
+		53F24A38DA083EE8FBF1885A /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 3AF020D2E449FA5E0E56343A /* Localizable.xcstrings */; };
+		5D982917F5338EAB7DA144D3 /* HearthRender in Frameworks */ = {isa = PBXBuildFile; productRef = 28DD53BADD4E05F91A170CB7 /* HearthRender */; };
+		616EC8A11FFF82AB80FF3FC1 /* Content in Resources */ = {isa = PBXBuildFile; fileRef = 43F4360292CE40A8A31F5879 /* Content */; };
+		6940FE34CE2E6285F3A2B7F8 /* HearthUI in Frameworks */ = {isa = PBXBuildFile; productRef = 9C56A60914A15CF6B2E116AF /* HearthUI */; };
+		6C1095148C5042ECBFE780DC /* KenneyPixel.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 3D652D306ED8253420BA137A /* KenneyPixel.ttf */; };
+		70C0EB968A32BC7D89E79B2B /* HearthdelveApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55B404083D20665CA288A5A3 /* HearthdelveApp.swift */; };
+		B65B6EFBC0F7F5475AF80FC8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EDACA3DCA4D4CA66C9B042DB /* Assets.xcassets */; };
+		BA5153669E31D46C49D2D1D4 /* HearthContent in Frameworks */ = {isa = PBXBuildFile; productRef = 33E9F1DA61A0F50DBBA54933 /* HearthContent */; };
+		D152E24550B1687BA59259F3 /* HearthAudio in Frameworks */ = {isa = PBXBuildFile; productRef = 968A0FCC82B0226F35DFC331 /* HearthAudio */; };
+		EBE68955D993F1F541DE332C /* HearthPersistence in Frameworks */ = {isa = PBXBuildFile; productRef = 24D4BAFFDE6700FC6E7077CC /* HearthPersistence */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0FD894DE2FD924F315FC17C1 /* HearthAudio */ = {isa = PBXFileReference; lastKnownFileType = folder; name = HearthAudio; path = Packages/HearthAudio; sourceTree = SOURCE_ROOT; };
+		368532B0ED0701DE71D5D36D /* HearthCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = HearthCore; path = Packages/HearthCore; sourceTree = SOURCE_ROOT; };
+		3AF020D2E449FA5E0E56343A /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		3D652D306ED8253420BA137A /* KenneyPixel.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = KenneyPixel.ttf; sourceTree = "<group>"; };
+		40055E22C1968930646007EC /* HearthTelemetry */ = {isa = PBXFileReference; lastKnownFileType = folder; name = HearthTelemetry; path = Packages/HearthTelemetry; sourceTree = SOURCE_ROOT; };
+		43F4360292CE40A8A31F5879 /* Content */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Content; sourceTree = SOURCE_ROOT; };
+		52462ECCEF964986A1CCA5E4 /* Hearthdelve.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Hearthdelve.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		55B404083D20665CA288A5A3 /* HearthdelveApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HearthdelveApp.swift; sourceTree = "<group>"; };
+		7D83C7E0C1A1F03E3AC9A937 /* HearthRender */ = {isa = PBXFileReference; lastKnownFileType = folder; name = HearthRender; path = Packages/HearthRender; sourceTree = SOURCE_ROOT; };
+		9856498A9FFC90B62D57C230 /* HearthContent */ = {isa = PBXFileReference; lastKnownFileType = folder; name = HearthContent; path = Packages/HearthContent; sourceTree = SOURCE_ROOT; };
+		DFD84161B52385768F0B5692 /* HearthUI */ = {isa = PBXFileReference; lastKnownFileType = folder; name = HearthUI; path = Packages/HearthUI; sourceTree = SOURCE_ROOT; };
+		EDACA3DCA4D4CA66C9B042DB /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		F4AD82EB1D38DB76B7D05004 /* HearthPersistence */ = {isa = PBXFileReference; lastKnownFileType = folder; name = HearthPersistence; path = Packages/HearthPersistence; sourceTree = SOURCE_ROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		207865E2194669DEE432B06C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				00541BCD0FDFA6E87D1B03BE /* HearthCore in Frameworks */,
+				BA5153669E31D46C49D2D1D4 /* HearthContent in Frameworks */,
+				5D982917F5338EAB7DA144D3 /* HearthRender in Frameworks */,
+				6940FE34CE2E6285F3A2B7F8 /* HearthUI in Frameworks */,
+				EBE68955D993F1F541DE332C /* HearthPersistence in Frameworks */,
+				2519678DB87A6C89FF48D872 /* HearthTelemetry in Frameworks */,
+				D152E24550B1687BA59259F3 /* HearthAudio in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		3E9A9745D5679BEAEAE770F1 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				0FD894DE2FD924F315FC17C1 /* HearthAudio */,
+				9856498A9FFC90B62D57C230 /* HearthContent */,
+				368532B0ED0701DE71D5D36D /* HearthCore */,
+				F4AD82EB1D38DB76B7D05004 /* HearthPersistence */,
+				7D83C7E0C1A1F03E3AC9A937 /* HearthRender */,
+				40055E22C1968930646007EC /* HearthTelemetry */,
+				DFD84161B52385768F0B5692 /* HearthUI */,
+			);
+			path = Packages;
+			sourceTree = "<group>";
+		};
+		67701EFD601D4A727270C4E2 /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				3D652D306ED8253420BA137A /* KenneyPixel.ttf */,
+			);
+			path = Fonts;
+			sourceTree = "<group>";
+		};
+		D5C6AB71764CB5F363791352 = {
+			isa = PBXGroup;
+			children = (
+				43F4360292CE40A8A31F5879 /* Content */,
+				F6A761D318CE7F9305482EA0 /* App */,
+				3E9A9745D5679BEAEAE770F1 /* Packages */,
+				FC593AED3E85149F1F35532A /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		F6A761D318CE7F9305482EA0 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				EDACA3DCA4D4CA66C9B042DB /* Assets.xcassets */,
+				55B404083D20665CA288A5A3 /* HearthdelveApp.swift */,
+				3AF020D2E449FA5E0E56343A /* Localizable.xcstrings */,
+				67701EFD601D4A727270C4E2 /* Fonts */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		FC593AED3E85149F1F35532A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				52462ECCEF964986A1CCA5E4 /* Hearthdelve.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		823E38C667EC9B5191EFA38F /* Hearthdelve */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 82D02025DE8450EB0914A36E /* Build configuration list for PBXNativeTarget "Hearthdelve" */;
+			buildPhases = (
+				90E6A9967BEB7C6384F99E1B /* Sources */,
+				F1EDF5F9138367441CEBA246 /* Resources */,
+				207865E2194669DEE432B06C /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Hearthdelve;
+			packageProductDependencies = (
+				31A1AD4EE44C9C6AF569AE6E /* HearthCore */,
+				33E9F1DA61A0F50DBBA54933 /* HearthContent */,
+				28DD53BADD4E05F91A170CB7 /* HearthRender */,
+				9C56A60914A15CF6B2E116AF /* HearthUI */,
+				24D4BAFFDE6700FC6E7077CC /* HearthPersistence */,
+				4DCD87C74A7D799EA8DC4B78 /* HearthTelemetry */,
+				968A0FCC82B0226F35DFC331 /* HearthAudio */,
+			);
+			productName = Hearthdelve;
+			productReference = 52462ECCEF964986A1CCA5E4 /* Hearthdelve.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		4798109B7ED6AE5FDFB88ED7 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					823E38C667EC9B5191EFA38F = {
+						DevelopmentTeam = 7JT2JB89AV;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 9AAA0571F3DA1CD2B3049A76 /* Build configuration list for PBXProject "Hearthdelve" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = D5C6AB71764CB5F363791352;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				FBAD92FE580B6A31081B42D7 /* XCLocalSwiftPackageReference "Packages/HearthAudio" */,
+				E03BEA71FCA9C6B17C46703C /* XCLocalSwiftPackageReference "Packages/HearthContent" */,
+				BE993BB2747E313983765D55 /* XCLocalSwiftPackageReference "Packages/HearthCore" */,
+				24D0FB997118364D0C81C42E /* XCLocalSwiftPackageReference "Packages/HearthPersistence" */,
+				EDD8DE09995FF153863EE4E3 /* XCLocalSwiftPackageReference "Packages/HearthRender" */,
+				2305DC913340E8E9EE10D109 /* XCLocalSwiftPackageReference "Packages/HearthTelemetry" */,
+				E4434D87AB2579CE9663512A /* XCLocalSwiftPackageReference "Packages/HearthUI" */,
+			);
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				823E38C667EC9B5191EFA38F /* Hearthdelve */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		F1EDF5F9138367441CEBA246 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B65B6EFBC0F7F5475AF80FC8 /* Assets.xcassets in Resources */,
+				616EC8A11FFF82AB80FF3FC1 /* Content in Resources */,
+				6C1095148C5042ECBFE780DC /* KenneyPixel.ttf in Resources */,
+				53F24A38DA083EE8FBF1885A /* Localizable.xcstrings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		90E6A9967BEB7C6384F99E1B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				70C0EB968A32BC7D89E79B2B /* HearthdelveApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		89B659277AC86D114C602177 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 7JT2JB89AV;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTS_MAC_DESIGNED_FOR_IPAD = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		B681F557177A5E697261DE3C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Hearthdelve;
+				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
+				INFOPLIST_KEY_UIFileSharingEnabled = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiresFullScreen = YES;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.jacobrozell.hearthdelve;
+				SDKROOT = iphoneos;
+				SUPPORTS_MAC_DESIGNED_FOR_IPAD = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		BD7F1E5F422DF788ACAA6DBF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Hearthdelve;
+				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
+				INFOPLIST_KEY_UIFileSharingEnabled = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiresFullScreen = YES;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.jacobrozell.hearthdelve;
+				SDKROOT = iphoneos;
+				SUPPORTS_MAC_DESIGNED_FOR_IPAD = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		EE40F2C0B6AB40EA28743933 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 7JT2JB89AV;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTS_MAC_DESIGNED_FOR_IPAD = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		82D02025DE8450EB0914A36E /* Build configuration list for PBXNativeTarget "Hearthdelve" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BD7F1E5F422DF788ACAA6DBF /* Debug */,
+				B681F557177A5E697261DE3C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		9AAA0571F3DA1CD2B3049A76 /* Build configuration list for PBXProject "Hearthdelve" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				89B659277AC86D114C602177 /* Debug */,
+				EE40F2C0B6AB40EA28743933 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		2305DC913340E8E9EE10D109 /* XCLocalSwiftPackageReference "Packages/HearthTelemetry" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/HearthTelemetry;
+		};
+		24D0FB997118364D0C81C42E /* XCLocalSwiftPackageReference "Packages/HearthPersistence" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/HearthPersistence;
+		};
+		BE993BB2747E313983765D55 /* XCLocalSwiftPackageReference "Packages/HearthCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/HearthCore;
+		};
+		E03BEA71FCA9C6B17C46703C /* XCLocalSwiftPackageReference "Packages/HearthContent" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/HearthContent;
+		};
+		E4434D87AB2579CE9663512A /* XCLocalSwiftPackageReference "Packages/HearthUI" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/HearthUI;
+		};
+		EDD8DE09995FF153863EE4E3 /* XCLocalSwiftPackageReference "Packages/HearthRender" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/HearthRender;
+		};
+		FBAD92FE580B6A31081B42D7 /* XCLocalSwiftPackageReference "Packages/HearthAudio" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/HearthAudio;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		24D4BAFFDE6700FC6E7077CC /* HearthPersistence */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HearthPersistence;
+		};
+		28DD53BADD4E05F91A170CB7 /* HearthRender */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HearthRender;
+		};
+		31A1AD4EE44C9C6AF569AE6E /* HearthCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HearthCore;
+		};
+		33E9F1DA61A0F50DBBA54933 /* HearthContent */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HearthContent;
+		};
+		4DCD87C74A7D799EA8DC4B78 /* HearthTelemetry */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HearthTelemetry;
+		};
+		968A0FCC82B0226F35DFC331 /* HearthAudio */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HearthAudio;
+		};
+		9C56A60914A15CF6B2E116AF /* HearthUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HearthUI;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 4798109B7ED6AE5FDFB88ED7 /* Project object */;
+}

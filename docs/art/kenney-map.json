@@ -1,0 +1,842 @@
+{
+  "version": 1,
+  "inventory": "Tiny Dungeon and Tiny Town first pass, plus the Roguelike Characters hero paper-doll (body 0, legs 3, boots 4, chest 6, hair 19; sword 368, bow 52). Other vendored packs are not mapped yet.",
+  "sheets": {
+    "tiny-dungeon": {
+      "pack": "tiny-dungeon",
+      "packed": "Tilemap/tilemap_packed.png",
+      "spaced": "Tilemap/tilemap.png",
+      "tile": 16,
+      "columns": 12,
+      "rows": 11,
+      "packedSpacing": 0,
+      "spacedGutter": 1
+    },
+    "tiny-town": {
+      "pack": "tiny-town",
+      "packed": "Tilemap/tilemap_packed.png",
+      "spaced": "Tilemap/tilemap.png",
+      "tile": 16,
+      "columns": 12,
+      "rows": 11,
+      "packedSpacing": 0,
+      "spacedGutter": 1
+    },
+    "roguelike-characters": {
+      "pack": "roguelike-characters",
+      "spaced": "Spritesheet/roguelikeChar_transparent.png",
+      "tile": 16,
+      "columns": 54,
+      "rows": 12,
+      "spacedGutter": 1
+    }
+  },
+  "entries": {
+    "creature.slime": {
+      "pack": "tiny-dungeon",
+      "index": 108,
+      "file": "Tiles/tile_0108.png"
+    },
+    "creature.cyclops": {
+      "pack": "tiny-dungeon",
+      "index": 109,
+      "file": "Tiles/tile_0109.png"
+    },
+    "creature.crab_demon": {
+      "pack": "tiny-dungeon",
+      "index": 110,
+      "file": "Tiles/tile_0110.png"
+    },
+    "creature.bat": {
+      "pack": "tiny-dungeon",
+      "index": 120,
+      "file": "Tiles/tile_0120.png"
+    },
+    "creature.ghost": {
+      "pack": "tiny-dungeon",
+      "index": 121,
+      "file": "Tiles/tile_0121.png"
+    },
+    "creature.spider": {
+      "pack": "tiny-dungeon",
+      "index": 122,
+      "file": "Tiles/tile_0122.png"
+    },
+    "creature.brown_rat": {
+      "pack": "tiny-dungeon",
+      "index": 123,
+      "file": "Tiles/tile_0123.png"
+    },
+    "creature.grey_rat": {
+      "pack": "tiny-dungeon",
+      "index": 124,
+      "file": "Tiles/tile_0124.png"
+    },
+    "creature.glimmerkin": {
+      "pack": "tiny-dungeon",
+      "index": 92,
+      "file": "Tiles/tile_0092.png"
+    },
+    "wanderer.smith": {
+      "pack": "tiny-dungeon",
+      "index": 86,
+      "file": "Tiles/tile_0086.png"
+    },
+    "wanderer.herbalist": {
+      "pack": "tiny-dungeon",
+      "index": 112,
+      "file": "Tiles/tile_0112.png"
+    },
+    "wanderer.cartographer": {
+      "pack": "tiny-dungeon",
+      "index": 88,
+      "file": "Tiles/tile_0088.png"
+    },
+    "wanderer.bard": {
+      "pack": "tiny-dungeon",
+      "index": 85,
+      "file": "Tiles/tile_0085.png"
+    },
+    "wanderer.archivist": {
+      "pack": "tiny-dungeon",
+      "index": 111,
+      "file": "Tiles/tile_0111.png"
+    },
+    "wanderer.relic_keeper": {
+      "pack": "tiny-dungeon",
+      "index": 84,
+      "file": "Tiles/tile_0084.png"
+    },
+    "wanderer.chandler": {
+      "pack": "tiny-dungeon",
+      "index": 100,
+      "file": "Tiles/tile_0100.png"
+    },
+    "wanderer.quartermaster": {
+      "pack": "tiny-dungeon",
+      "index": 87,
+      "file": "Tiles/tile_0087.png"
+    },
+    "wanderer.glyphwright": {
+      "pack": "tiny-dungeon",
+      "index": 97,
+      "file": "Tiles/tile_0097.png"
+    },
+    "wanderer.gardener": {
+      "pack": "tiny-dungeon",
+      "index": 99,
+      "file": "Tiles/tile_0099.png"
+    },
+    "wanderer.trophy_keeper": {
+      "pack": "tiny-dungeon",
+      "index": 96,
+      "file": "Tiles/tile_0096.png"
+    },
+    "wanderer.lighthouse_keeper": {
+      "pack": "tiny-dungeon",
+      "index": 98,
+      "file": "Tiles/tile_0098.png"
+    },
+    "weapon.sword": {
+      "pack": "tiny-dungeon",
+      "index": 104,
+      "file": "Tiles/tile_0104.png"
+    },
+    "weapon.broadsword": {
+      "pack": "tiny-dungeon",
+      "index": 106,
+      "file": "Tiles/tile_0106.png"
+    },
+    "weapon.hammer": {
+      "pack": "tiny-dungeon",
+      "index": 117,
+      "file": "Tiles/tile_0117.png"
+    },
+    "weapon.daggers": {
+      "pack": "tiny-dungeon",
+      "index": 103,
+      "file": "Tiles/tile_0103.png"
+    },
+    "weapon.spear": {
+      "pack": "tiny-dungeon",
+      "index": 131,
+      "file": "Tiles/tile_0131.png"
+    },
+    "weapon.wand": {
+      "pack": "tiny-dungeon",
+      "index": 129,
+      "file": "Tiles/tile_0129.png"
+    },
+    "weapon.staff": {
+      "pack": "tiny-dungeon",
+      "index": 130,
+      "file": "Tiles/tile_0130.png"
+    },
+    "weapon.cleaver": {
+      "pack": "tiny-dungeon",
+      "index": 105,
+      "file": "Tiles/tile_0105.png"
+    },
+    "weapon.axe": {
+      "pack": "tiny-dungeon",
+      "index": 118,
+      "file": "Tiles/tile_0118.png"
+    },
+    "weapon.axe_b": {
+      "pack": "tiny-dungeon",
+      "index": 119,
+      "file": "Tiles/tile_0119.png"
+    },
+    "weapon.club": {
+      "pack": "tiny-dungeon",
+      "index": 107,
+      "file": "Tiles/tile_0107.png"
+    },
+    "weapon.shield": {
+      "pack": "tiny-dungeon",
+      "index": 101,
+      "file": "Tiles/tile_0101.png"
+    },
+    "weapon.shield_b": {
+      "pack": "tiny-dungeon",
+      "index": 102,
+      "file": "Tiles/tile_0102.png"
+    },
+    "tile.dirt": {
+      "pack": "tiny-dungeon",
+      "index": 0,
+      "file": "Tiles/tile_0000.png"
+    },
+    "tile.rubble_a": {
+      "pack": "tiny-dungeon",
+      "index": 12,
+      "file": "Tiles/tile_0012.png"
+    },
+    "tile.rubble_b": {
+      "pack": "tiny-dungeon",
+      "index": 24,
+      "file": "Tiles/tile_0024.png"
+    },
+    "tile.sand": {
+      "pack": "tiny-dungeon",
+      "index": 30,
+      "file": "Tiles/tile_0030.png"
+    },
+    "tile.stairs": {
+      "pack": "tiny-dungeon",
+      "index": 9,
+      "file": "Tiles/tile_0009.png"
+    },
+    "tile.pit": {
+      "pack": "tiny-dungeon",
+      "index": 56,
+      "file": "Tiles/tile_0056.png"
+    },
+    "tile.pillar": {
+      "pack": "tiny-dungeon",
+      "index": 6,
+      "file": "Tiles/tile_0006.png"
+    },
+    "tile.banner": {
+      "pack": "tiny-dungeon",
+      "index": 29,
+      "file": "Tiles/tile_0029.png"
+    },
+    "tile.shrine": {
+      "pack": "tiny-dungeon",
+      "index": 41,
+      "file": "Tiles/tile_0041.png"
+    },
+    "tile.gravestone": {
+      "pack": "tiny-dungeon",
+      "index": 65,
+      "file": "Tiles/tile_0065.png"
+    },
+    "tile.table": {
+      "pack": "tiny-dungeon",
+      "index": 72,
+      "file": "Tiles/tile_0072.png"
+    },
+    "tile.stool": {
+      "pack": "tiny-dungeon",
+      "index": 73,
+      "file": "Tiles/tile_0073.png"
+    },
+    "tile.anvil": {
+      "pack": "tiny-dungeon",
+      "index": 74,
+      "file": "Tiles/tile_0074.png"
+    },
+    "tile.bookcase": {
+      "pack": "tiny-dungeon",
+      "index": 75,
+      "file": "Tiles/tile_0075.png"
+    },
+    "tile.barrel": {
+      "pack": "tiny-dungeon",
+      "index": 82,
+      "file": "Tiles/tile_0082.png"
+    },
+    "tile.chest": {
+      "pack": "tiny-dungeon",
+      "index": 89,
+      "file": "Tiles/tile_0089.png"
+    },
+    "tile.potion": {
+      "pack": "tiny-dungeon",
+      "index": 113,
+      "file": "Tiles/tile_0113.png"
+    },
+    "prop.hazard_stripes": {
+      "pack": "tiny-dungeon",
+      "index": 62,
+      "file": "Tiles/tile_0062.png"
+    },
+    "prop.dashed_marker": {
+      "pack": "tiny-dungeon",
+      "index": 60,
+      "file": "Tiles/tile_0060.png"
+    },
+    "tile.grass": {
+      "pack": "tiny-town",
+      "index": 0,
+      "file": "Tiles/tile_0000.png"
+    },
+    "prop.red_mushroom": {
+      "pack": "tiny-town",
+      "index": 29,
+      "file": "Tiles/tile_0029.png"
+    },
+    "prop.signpost": {
+      "pack": "tiny-town",
+      "index": 83,
+      "file": "Tiles/tile_0083.png"
+    },
+    "prop.tent": {
+      "pack": "tiny-town",
+      "index": 92,
+      "file": "Tiles/tile_0092.png"
+    },
+    "prop.coin": {
+      "pack": "tiny-town",
+      "index": 93,
+      "file": "Tiles/tile_0093.png"
+    },
+    "prop.beehive": {
+      "pack": "tiny-town",
+      "index": 94,
+      "file": "Tiles/tile_0094.png"
+    },
+    "prop.archery_target": {
+      "pack": "tiny-town",
+      "index": 95,
+      "file": "Tiles/tile_0095.png"
+    },
+    "prop.cellar_hatch": {
+      "pack": "tiny-town",
+      "index": 103,
+      "file": "Tiles/tile_0103.png"
+    },
+    "prop.well": {
+      "pack": "tiny-town",
+      "index": 104,
+      "file": "Tiles/tile_0104.png"
+    },
+    "prop.cauldron": {
+      "pack": "tiny-town",
+      "index": 107,
+      "file": "Tiles/tile_0107.png"
+    },
+    "weapon.bow": {
+      "pack": "tiny-town",
+      "index": 118,
+      "file": "Tiles/tile_0118.png"
+    },
+    "weapon.arrow": {
+      "pack": "tiny-town",
+      "index": 119,
+      "file": "Tiles/tile_0119.png"
+    },
+    "weapon.crossbow": {
+      "gap": "weapon.crossbow"
+    },
+    "weapon.sling": {
+      "gap": "weapon.sling"
+    },
+    "weapon.scythe": {
+      "gap": "weapon.scythe"
+    },
+    "prop.lantern": {
+      "gap": "prop.lantern"
+    },
+    "prop.campfire": {
+      "gap": "prop.campfire"
+    },
+    "prop.candle": {
+      "gap": "prop.candle"
+    },
+    "tile.water": {
+      "gap": "tile.water"
+    },
+    "icon.helm": {
+      "gap": "icon.helm"
+    },
+    "icon.chest": {
+      "gap": "icon.chest"
+    },
+    "icon.legs": {
+      "gap": "icon.legs"
+    },
+    "icon.boots": {
+      "gap": "icon.boots"
+    },
+    "icon.dust": {
+      "gap": "icon.dust"
+    },
+    "icon.shards": {
+      "gap": "icon.shards"
+    },
+    "icon.embers": {
+      "gap": "icon.embers"
+    },
+    "prop.lighthouse": {
+      "gap": "prop.lighthouse"
+    },
+    "pet.moth": {
+      "gap": "pet.moth"
+    },
+    "creature.gnawking": {
+      "gap": "creature.gnawking"
+    },
+    "creature.slimelet": {
+      "gap": "creature.slimelet"
+    },
+    "creature.bog_slime": {
+      "gap": "creature.bog_slime"
+    },
+    "creature.glop_mage": {
+      "gap": "creature.glop_mage"
+    },
+    "creature.pebble_imp": {
+      "gap": "creature.pebble_imp"
+    },
+    "creature.pebble_pitcher": {
+      "gap": "creature.pebble_pitcher"
+    },
+    "creature.dust_shaman": {
+      "gap": "creature.dust_shaman"
+    },
+    "creature.sporeling": {
+      "gap": "creature.sporeling"
+    },
+    "creature.puffling": {
+      "gap": "creature.puffling"
+    },
+    "creature.mycelium_brute": {
+      "gap": "creature.mycelium_brute"
+    },
+    "creature.cap_shaman": {
+      "gap": "creature.cap_shaman"
+    },
+    "creature.spiderling": {
+      "gap": "creature.spiderling"
+    },
+    "creature.web_spitter": {
+      "gap": "creature.web_spitter"
+    },
+    "creature.brood_mother": {
+      "gap": "creature.brood_mother"
+    },
+    "creature.glowgrub": {
+      "gap": "creature.glowgrub"
+    },
+    "creature.grub_swarm": {
+      "gap": "creature.grub_swarm"
+    },
+    "creature.lantern_beetle": {
+      "gap": "creature.lantern_beetle"
+    },
+    "creature.glowfly": {
+      "gap": "creature.glowfly"
+    },
+    "creature.inkling": {
+      "gap": "creature.inkling"
+    },
+    "creature.bound_tome": {
+      "gap": "creature.bound_tome"
+    },
+    "creature.wailing_folio": {
+      "gap": "creature.wailing_folio"
+    },
+    "creature.inkcrab": {
+      "gap": "creature.inkcrab"
+    },
+    "creature.ink_spitter": {
+      "gap": "creature.ink_spitter"
+    },
+    "creature.tidecaller": {
+      "gap": "creature.tidecaller"
+    },
+    "creature.bookworm": {
+      "gap": "creature.bookworm"
+    },
+    "creature.paper_moth": {
+      "gap": "creature.paper_moth"
+    },
+    "creature.quill_shooter": {
+      "gap": "creature.quill_shooter"
+    },
+    "creature.shushing_wisp": {
+      "gap": "creature.shushing_wisp"
+    },
+    "creature.cinder_imp": {
+      "gap": "creature.cinder_imp"
+    },
+    "creature.sparklet": {
+      "gap": "creature.sparklet"
+    },
+    "creature.ember_slinger": {
+      "gap": "creature.ember_slinger"
+    },
+    "creature.forge_hexer": {
+      "gap": "creature.forge_hexer"
+    },
+    "creature.slag_golem": {
+      "gap": "creature.slag_golem"
+    },
+    "creature.slag_pup": {
+      "gap": "creature.slag_pup"
+    },
+    "creature.molten_spitter": {
+      "gap": "creature.molten_spitter"
+    },
+    "creature.ash_caller": {
+      "gap": "creature.ash_caller"
+    },
+    "creature.forge_bat": {
+      "gap": "creature.forge_bat"
+    },
+    "creature.cinder_swarm": {
+      "gap": "creature.cinder_swarm"
+    },
+    "creature.bellows_brute": {
+      "gap": "creature.bellows_brute"
+    },
+    "creature.spark_bat": {
+      "gap": "creature.spark_bat"
+    },
+    "creature.shade": {
+      "gap": "creature.shade"
+    },
+    "creature.shadeling": {
+      "gap": "creature.shadeling"
+    },
+    "creature.null_knight": {
+      "gap": "creature.null_knight"
+    },
+    "creature.void_whisper": {
+      "gap": "creature.void_whisper"
+    },
+    "creature.dim_moth": {
+      "gap": "creature.dim_moth"
+    },
+    "creature.moth_cloud": {
+      "gap": "creature.moth_cloud"
+    },
+    "creature.comet_moth": {
+      "gap": "creature.comet_moth"
+    },
+    "creature.eclipse_moth": {
+      "gap": "creature.eclipse_moth"
+    },
+    "creature.cog_crawler": {
+      "gap": "creature.cog_crawler"
+    },
+    "creature.tick_swarm": {
+      "gap": "creature.tick_swarm"
+    },
+    "creature.gear_golem": {
+      "gap": "creature.gear_golem"
+    },
+    "creature.orrery_eye": {
+      "gap": "creature.orrery_eye"
+    },
+    "guardian.rat_regent": {
+      "gap": "guardian.rat_regent"
+    },
+    "guardian.mother_ooze": {
+      "gap": "guardian.mother_ooze"
+    },
+    "guardian.old_lintel": {
+      "gap": "guardian.old_lintel"
+    },
+    "guardian.the_bloom": {
+      "gap": "guardian.the_bloom"
+    },
+    "guardian.widow_of_threads": {
+      "gap": "guardian.widow_of_threads"
+    },
+    "guardian.great_glowgrub": {
+      "gap": "guardian.great_glowgrub"
+    },
+    "guardian.headmistress_quill": {
+      "gap": "guardian.headmistress_quill"
+    },
+    "guardian.brinejaw": {
+      "gap": "guardian.brinejaw"
+    },
+    "guardian.the_index": {
+      "gap": "guardian.the_index"
+    },
+    "guardian.foreman_cinder": {
+      "gap": "guardian.foreman_cinder"
+    },
+    "guardian.crucible": {
+      "gap": "guardian.crucible"
+    },
+    "guardian.great_bellows": {
+      "gap": "guardian.great_bellows"
+    },
+    "guardian.hollow_king": {
+      "gap": "guardian.hollow_king"
+    },
+    "guardian.moon_moth": {
+      "gap": "guardian.moon_moth"
+    },
+    "guardian.grand_orrery": {
+      "gap": "guardian.grand_orrery"
+    },
+    "warden.keeper_of_the_well": {
+      "gap": "warden.keeper_of_the_well"
+    },
+    "warden.lampless_one": {
+      "gap": "warden.lampless_one"
+    },
+    "summon.hound": {
+      "gap": "summon.hound"
+    },
+    "summon.wisp": {
+      "gap": "summon.wisp"
+    },
+    "summon.moth_decoy": {
+      "gap": "summon.moth_decoy"
+    },
+    "summon.soldier": {
+      "gap": "summon.soldier"
+    },
+    "icon.relic.ember_flask": {
+      "gap": "icon.relic.ember_flask"
+    },
+    "icon.relic.coal_comet": {
+      "gap": "icon.relic.coal_comet"
+    },
+    "icon.relic.smoke_pot": {
+      "gap": "icon.relic.smoke_pot"
+    },
+    "icon.relic.hearth_coals": {
+      "gap": "icon.relic.hearth_coals"
+    },
+    "icon.relic.wick_trail": {
+      "gap": "icon.relic.wick_trail"
+    },
+    "icon.relic.rime_shard": {
+      "gap": "icon.relic.rime_shard"
+    },
+    "icon.relic.hailstone": {
+      "gap": "icon.relic.hailstone"
+    },
+    "icon.relic.frost_bell": {
+      "gap": "icon.relic.frost_bell"
+    },
+    "icon.relic.glacier_coat": {
+      "gap": "icon.relic.glacier_coat"
+    },
+    "icon.relic.snowdrift": {
+      "gap": "icon.relic.snowdrift"
+    },
+    "icon.relic.briar_hound": {
+      "gap": "icon.relic.briar_hound"
+    },
+    "icon.relic.root_snare": {
+      "gap": "icon.relic.root_snare"
+    },
+    "icon.relic.thornburst": {
+      "gap": "icon.relic.thornburst"
+    },
+    "icon.relic.barkskin": {
+      "gap": "icon.relic.barkskin"
+    },
+    "icon.relic.spore_cloud": {
+      "gap": "icon.relic.spore_cloud"
+    },
+    "icon.relic.lantern_ward": {
+      "gap": "icon.relic.lantern_ward"
+    },
+    "icon.relic.dawn_lance": {
+      "gap": "icon.relic.dawn_lance"
+    },
+    "icon.relic.vesper_chime": {
+      "gap": "icon.relic.vesper_chime"
+    },
+    "icon.relic.wisp_lantern": {
+      "gap": "icon.relic.wisp_lantern"
+    },
+    "icon.relic.candle_vigil": {
+      "gap": "icon.relic.candle_vigil"
+    },
+    "icon.relic.dusk_knives": {
+      "gap": "icon.relic.dusk_knives"
+    },
+    "icon.relic.grave_bloom": {
+      "gap": "icon.relic.grave_bloom"
+    },
+    "icon.relic.hush_veil": {
+      "gap": "icon.relic.hush_veil"
+    },
+    "icon.relic.moth_decoy": {
+      "gap": "icon.relic.moth_decoy"
+    },
+    "icon.relic.umbral_step": {
+      "gap": "icon.relic.umbral_step"
+    },
+    "icon.relic.blink_feather": {
+      "gap": "icon.relic.blink_feather"
+    },
+    "icon.relic.hearthbread_totem": {
+      "gap": "icon.relic.hearthbread_totem"
+    },
+    "icon.relic.iron_kettle": {
+      "gap": "icon.relic.iron_kettle"
+    },
+    "icon.relic.rope_bell": {
+      "gap": "icon.relic.rope_bell"
+    },
+    "icon.relic.tin_soldier": {
+      "gap": "icon.relic.tin_soldier"
+    },
+    "icon.charm.ember_heart": {
+      "gap": "icon.charm.ember_heart"
+    },
+    "icon.charm.lucky_acorn": {
+      "gap": "icon.charm.lucky_acorn"
+    },
+    "icon.charm.mossback_shell": {
+      "gap": "icon.charm.mossback_shell"
+    },
+    "icon.charm.moth_lantern": {
+      "gap": "icon.charm.moth_lantern"
+    },
+    "icon.charm.hounds_collar": {
+      "gap": "icon.charm.hounds_collar"
+    },
+    "icon.charm.soul_jar": {
+      "gap": "icon.charm.soul_jar"
+    },
+    "icon.charm.frost_locket": {
+      "gap": "icon.charm.frost_locket"
+    },
+    "icon.charm.whetstone": {
+      "gap": "icon.charm.whetstone"
+    },
+    "icon.charm.fletchers_knot": {
+      "gap": "icon.charm.fletchers_knot"
+    },
+    "icon.charm.owl_feather": {
+      "gap": "icon.charm.owl_feather"
+    },
+    "icon.charm.red_thread": {
+      "gap": "icon.charm.red_thread"
+    },
+    "icon.charm.tinderbox": {
+      "gap": "icon.charm.tinderbox"
+    },
+    "icon.charm.cricket_charm": {
+      "gap": "icon.charm.cricket_charm"
+    },
+    "icon.charm.hourglass_seed": {
+      "gap": "icon.charm.hourglass_seed"
+    },
+    "icon.charm.candle_stub": {
+      "gap": "icon.charm.candle_stub"
+    },
+    "icon.charm.copper_bell": {
+      "gap": "icon.charm.copper_bell"
+    },
+    "icon.charm.hearthstone": {
+      "gap": "icon.charm.hearthstone"
+    },
+    "icon.charm.iron_button": {
+      "gap": "icon.charm.iron_button"
+    },
+    "icon.charm.salt_pouch": {
+      "gap": "icon.charm.salt_pouch"
+    },
+    "icon.charm.leech_tooth": {
+      "gap": "icon.charm.leech_tooth"
+    },
+    "icon.charm.wayfarers_compass": {
+      "gap": "icon.charm.wayfarers_compass"
+    },
+    "icon.charm.honey_jar": {
+      "gap": "icon.charm.honey_jar"
+    },
+    "icon.charm.glowcap": {
+      "gap": "icon.charm.glowcap"
+    },
+    "icon.charm.thrift_coin": {
+      "gap": "icon.charm.thrift_coin"
+    },
+    "hero.sword": {
+      "pack": "roguelike-characters",
+      "index": 0,
+      "layers": [
+        {
+          "pack": "roguelike-characters",
+          "index": 3
+        },
+        {
+          "pack": "roguelike-characters",
+          "index": 4
+        },
+        {
+          "pack": "roguelike-characters",
+          "index": 6
+        },
+        {
+          "pack": "roguelike-characters",
+          "index": 19
+        },
+        {
+          "pack": "roguelike-characters",
+          "index": 368
+        }
+      ]
+    },
+    "hero.bow": {
+      "pack": "roguelike-characters",
+      "index": 0,
+      "layers": [
+        {
+          "pack": "roguelike-characters",
+          "index": 3
+        },
+        {
+          "pack": "roguelike-characters",
+          "index": 4
+        },
+        {
+          "pack": "roguelike-characters",
+          "index": 6
+        },
+        {
+          "pack": "roguelike-characters",
+          "index": 19
+        },
+        {
+          "pack": "roguelike-characters",
+          "index": 52
+        }
+      ]
+    }
+  }
+}

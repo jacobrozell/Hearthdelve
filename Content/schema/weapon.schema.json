@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "hearthdelve://weapon",
+  "title": "Weapon definition",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "name", "kind", "rangeTiles", "attacksPerSecond", "innate"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "name": { "type": "string", "minLength": 1 },
+    "kind": { "enum": ["melee", "ranged"] },
+    "rangeTiles": { "type": "number", "exclusiveMinimum": 0 },
+    "attacksPerSecond": { "type": "number", "exclusiveMinimum": 0 },
+    "innate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "enum": ["cleaveEvery", "stunEvery", "critChance", "pierce", "arcHeal", "chargedEvery", "pierceBolts", "homing", "ricochet"]
+        },
+        "hits": { "type": "integer", "minimum": 1 },
+        "seconds": { "type": "number", "minimum": 0 },
+        "chance": { "type": "number", "minimum": 0 },
+        "enemies": { "type": "integer", "minimum": 1 },
+        "fraction": { "type": "number" },
+        "shots": { "type": "integer", "minimum": 1 },
+        "bonus": { "type": "number" },
+        "targets": { "type": "integer", "minimum": 1 }
+      }
+    }
+  }
+}

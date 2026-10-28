@@ -1,0 +1,10 @@
+[
+  {"id": "brittle", "name": "Brittle", "effect": "Enemies take +25% crit damage; you take +15%", "fromDepth": 75, "stats": [{"stat": "critDamage", "value": 0.25}, {"stat": "damageTaken", "value": 0.15}]},
+  {"id": "swarm", "name": "Swarm", "effect": "2× fodder, half HP", "fromDepth": 75, "stats": [{"stat": "fodderCount", "value": 1.0}, {"stat": "enemyHP", "value": -0.5}]},
+  {"id": "fog", "name": "Fog", "effect": "Vision radius 60%", "fromDepth": 75, "stats": [{"stat": "visionRadius", "value": -0.4}]},
+  {"id": "bounty", "name": "Bounty", "effect": "Elites drop 2× materials", "fromDepth": 75, "stats": [{"stat": "materialFind", "value": 1.0}]},
+  {"id": "thick_hides", "name": "Thick Hides", "effect": "Enemies have +30% HP; +30% gold", "fromDepth": 75, "stats": [{"stat": "enemyHP", "value": 0.3}, {"stat": "goldFind", "value": 0.3}]},
+  {"id": "restless", "name": "Restless", "effect": "Enemies move 20% faster; +20% XP", "fromDepth": 75, "stats": [{"stat": "enemySpeed", "value": 0.2}, {"stat": "xpGain", "value": 0.2}]},
+  {"id": "ember_tide", "name": "Ember Tide", "effect": "Enemies deal +20% damage; loot quality +25%", "fromDepth": 75, "stats": [{"stat": "enemyDamage", "value": 0.2}, {"stat": "lootQuality", "value": 0.25}]},
+  {"id": "crowded_halls", "name": "Crowded Halls", "effect": "One extra pack per room; +25% materials", "fromDepth": 75, "stats": [{"stat": "packCount", "value": 1}, {"stat": "materialFind", "value": 0.25}]}
+]

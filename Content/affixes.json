@@ -1,0 +1,17 @@
+{
+  "affixes": [
+    {"id": "molten", "name": "Molten", "effect": "Leaves fire trails; explodes on death", "unlockDepth": 1, "color": "#e8763a", "shape": "triangle"},
+    {"id": "frozen", "name": "Frozen", "effect": "Spawns frost orbs that burst after 1.5 s", "unlockDepth": 1, "color": "#8fd3ff", "shape": "diamond"},
+    {"id": "shielding", "name": "Shielding", "effect": "Periodically immune to damage for 3 s", "unlockDepth": 1, "color": "#f4d35e", "shape": "square"},
+    {"id": "vampiric", "name": "Vampiric", "effect": "Heals 30% of damage dealt", "unlockDepth": 1, "color": "#c23b5a", "shape": "circle"},
+    {"id": "thornback", "name": "Thornback", "effect": "Reflects 15% of melee damage", "unlockDepth": 10, "color": "#6aa84f", "shape": "star"},
+    {"id": "waller", "name": "Waller", "effect": "Raises walls that split the room", "unlockDepth": 10, "color": "#9a8c7a", "shape": "square"},
+    {"id": "splitter", "name": "Splitter", "effect": "Splits into two smaller copies at 50% HP", "unlockDepth": 20, "color": "#7bd389", "shape": "ring"},
+    {"id": "mortar", "name": "Mortar", "effect": "Lobs telegraphed shells at range", "unlockDepth": 20, "color": "#d9a066", "shape": "circle"},
+    {"id": "haunted", "name": "Haunted", "effect": "Releases a ghost on death that chases the hero", "unlockDepth": 30, "color": "#b4a7d6", "shape": "ring"},
+    {"id": "vortex", "name": "Vortex", "effect": "Pulls the hero toward it", "unlockDepth": 40, "color": "#5b6ee1", "shape": "star"},
+    {"id": "lanternbane", "name": "Lanternbane", "effect": "Each hit drains 1% Lantern", "unlockDepth": 60, "color": "#3f3f74", "shape": "triangle"},
+    {"id": "jailer", "name": "Jailer", "effect": "Roots the hero for 1.5 s", "unlockDepth": 75, "color": "#cbdbfc", "shape": "diamond"}
+  ],
+  "bans": [["frozen", "jailer"], ["vortex", "jailer"], ["waller", "vortex"], ["molten", "vortex"]]
+}

@@ -1,0 +1,14 @@
+[
+  {"id": "blacksmith", "name": "Blacksmith", "wanderer": "smith", "unlock": "onboarding", "sprite": "wanderer.smith"},
+  {"id": "apothecary", "name": "Apothecary", "wanderer": "herbalist", "unlock": 2, "sprite": "wanderer.herbalist"},
+  {"id": "library", "name": "Library", "wanderer": "archivist", "unlock": 3, "sprite": "wanderer.archivist"},
+  {"id": "map_room", "name": "Map Room", "wanderer": "cartographer", "unlock": 5, "sprite": "wanderer.cartographer"},
+  {"id": "stash_house", "name": "Stash House", "wanderer": "quartermaster", "unlock": 8, "sprite": "wanderer.quartermaster"},
+  {"id": "inn", "name": "Inn", "wanderer": "bard", "unlock": 10, "sprite": "wanderer.bard"},
+  {"id": "chandlery", "name": "Chandlery", "wanderer": "chandler", "unlock": 12, "sprite": "wanderer.chandler"},
+  {"id": "reliquary", "name": "Reliquary", "wanderer": "relic_keeper", "unlock": 15, "sprite": "wanderer.relic_keeper"},
+  {"id": "garden", "name": "Garden", "wanderer": "gardener", "unlock": 20, "sprite": "wanderer.gardener"},
+  {"id": "trophy_hall", "name": "Trophy Hall", "wanderer": "trophy_keeper", "unlock": 25, "sprite": "wanderer.trophy_keeper"},
+  {"id": "lighthouse", "name": "Lighthouse", "wanderer": "lighthouse_keeper", "unlock": 40, "sprite": "wanderer.lighthouse_keeper"},
+  {"id": "glyphwright", "name": "Glyphwright", "wanderer": "glyphwright", "unlock": 50, "sprite": "wanderer.glyphwright"}
+]
