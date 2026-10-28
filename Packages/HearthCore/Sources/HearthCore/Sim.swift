@@ -29,9 +29,10 @@ public struct EntityPose: Sendable, Equatable {
     public var hostile: Bool
     public var dx: Double
     public var dy: Double
+    public var enraged: Bool
 }
 
-/// A ground warning: fills from the center as `progress` goes from 0 to 1, then the attack lands.
+/// A ground warning. The footprint is filled for the whole windup; `progress` still runs 0 to 1 until the attack lands.
 public struct TelegraphSnapshot: Sendable, Equatable {
     public var id: UInt32
     public var x: Double
@@ -39,6 +40,7 @@ public struct TelegraphSnapshot: Sendable, Equatable {
     public var radius: Double
     public var progress: Double
     public var slam: Bool
+    public var shape: String
 }
 
 public struct GroundSnapshot: Sendable, Equatable {
@@ -110,6 +112,13 @@ public struct SimSnapshot: Sendable, Equatable {
     public var souls: Double
     public var soulCap: Double
     public var lantern: Double
+    public var lanternOn: Bool
+    public var meter: Double
+    public var depth: Int
+    public var floor: Int
+    public var floorCount: Int
+    public var roomID: String = ""
+    public var riftResult: RiftResult?
     public var relics: [RelicSlotSnapshot]
     public var potionCharges: Int
     public var potionMax: Int
@@ -140,18 +149,62 @@ public struct RunRecording: Codable, Sendable, Equatable {
     public var endTick: UInt64
     public var endHash: UInt64
     public var inputs: [RecordedInput]
+    /// Nil on a plain room recording. A Rift recording names the mode so replay runs the shell.
+    public var riftMode: String?
+    public var riftDepth: Int?
+    public var riftFloors: Int?
+    public var guardianID: String?
+    /// Nil means the par fight: power scale 1, no bonus hit points, no armor.
+    public var powerScale: Double?
+    public var bonusHP: Double?
+    public var armor: Double?
 
-    public init(simVersion: Int = SimVersion.current, contentVersion: String, seed: UInt64, endTick: UInt64, endHash: UInt64, inputs: [RecordedInput]) {
+    public init(
+        simVersion: Int = SimVersion.current, contentVersion: String, seed: UInt64, endTick: UInt64, endHash: UInt64, inputs: [RecordedInput],
+        riftMode: String? = nil, riftDepth: Int? = nil, riftFloors: Int? = nil, guardianID: String? = nil,
+        powerScale: Double? = nil, bonusHP: Double? = nil, armor: Double? = nil
+    ) {
         self.simVersion = simVersion
         self.contentVersion = contentVersion
         self.seed = seed
         self.endTick = endTick
         self.endHash = endHash
         self.inputs = inputs
+        self.riftMode = riftMode
+        self.riftDepth = riftDepth
+        self.riftFloors = riftFloors
+        self.guardianID = guardianID
+        self.powerScale = powerScale
+        self.bonusHP = bonusHP
+        self.armor = armor
     }
 
     /// Re-runs the recording headlessly and returns the end-state hash.
     public func replay(setup: RoomSetup) -> UInt64 {
+        var setup = setup
+        if let powerScale { setup.powerScale = powerScale }
+        if let bonusHP { setup.bonusHP = bonusHP }
+        if let armor { setup.armor = armor }
+        if riftMode != nil {
+            if let riftDepth { setup.depth = riftDepth }
+            if setup.rift == nil {
+                let mode: RiftMode = riftMode == RiftMode.deepRift.rawValue ? .deepRift : .delve
+                let guardian = guardianID == GuardianCatalog.oldLintel().id ? GuardianCatalog.oldLintel() : nil
+                setup.rift = RiftConfig(mode: mode, floors: riftFloors ?? 1, guardian: guardian)
+            }
+            var world = RiftWorld(seed: seed, setup: setup)
+            var cursor = 0
+            while world.sim.tick < endTick {
+                let next = world.sim.tick + 1
+                var commands: [SimCommand] = []
+                while cursor < inputs.count, inputs[cursor].tick == next {
+                    commands.append(inputs[cursor].command)
+                    cursor += 1
+                }
+                _ = world.step(commands: commands)
+            }
+            return world.stateHash()
+        }
         var world = SimWorld(seed: seed, setup: setup)
         var cursor = 0
         while world.tick < endTick {
@@ -231,6 +284,13 @@ public struct SimWorld: Sendable {
             souls: room.souls,
             soulCap: SoulRules.cap,
             lantern: 1,
+            lanternOn: false,
+            meter: 0,
+            depth: room.setup.depth,
+            floor: 1,
+            floorCount: room.setup.rift?.floors ?? 1,
+            roomID: room.setup.room.id,
+            riftResult: nil,
             relics: room.setup.relics.enumerated().map { slot, relic in
                 RelicSlotSnapshot(
                     id: relic.id,
@@ -261,7 +321,12 @@ public struct SimWorld: Sendable {
     }
 
     public func recording(contentVersion: String) -> RunRecording {
-        RunRecording(contentVersion: contentVersion, seed: seed, endTick: tick, endHash: stateHash(), inputs: inputs)
+        RunRecording(
+            contentVersion: contentVersion, seed: seed, endTick: tick, endHash: stateHash(), inputs: inputs,
+            powerScale: room.setup.powerScale == 1 ? nil : room.setup.powerScale,
+            bonusHP: room.setup.bonusHP == 0 ? nil : room.setup.bonusHP,
+            armor: room.setup.armor == 0 ? nil : room.setup.armor
+        )
     }
 }
 

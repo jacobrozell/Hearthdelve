@@ -1,6 +1,6 @@
 // Packs contract ids from docs/art/kenney-map.json into App/Assets.xcassets.
 // Hearth.spriteatlas holds one image per contract id ("creature.slime" -> "creature_slime"), with `layers` composited.
-// Tiles.spriteatlas holds every Tiny Dungeon tile as "tiny-dungeon_0048", for room tile maps.
+// Tiles.spriteatlas holds every Tiny Dungeon tile as "tiny-dungeon_0048" and every Tiny Town tile as "tiny-town_0048".
 // Usage:
 //   swift scripts/build-atlas.swift                      build the asset catalog and copy the Kenney Pixel font
 //   swift scripts/build-atlas.swift contact <pack> <out> [firstColumn lastColumn]  labeled contact sheet of a pack sheet
@@ -132,6 +132,21 @@ func imageset(_ image: CGImage, named name: String, in atlas: URL) {
     try! Data(contents.utf8).write(to: set.appendingPathComponent("Contents.json"))
 }
 
+func packTiles(_ pack: String, into atlas: URL) -> Int {
+    let sheet = map.sheets[pack]!
+    let count = sheet.columns * sheet.rows
+    for index in 0..<count {
+        imageset(tile(pack, index), named: String(format: "%@_%04d", pack, index), in: atlas)
+    }
+    return count
+}
+
+if args.first == "town" {
+    let count = packTiles("tiny-town", into: catalog.appendingPathComponent("Tiles.spriteatlas"))
+    print("town tiles \(count)")
+    exit(0)
+}
+
 folder(catalog)
 let hearth = catalog.appendingPathComponent("Hearth.spriteatlas")
 folder(hearth)
@@ -161,10 +176,8 @@ for (id, entry) in map.entries.sorted(by: { $0.key < $1.key }) {
 
 let tiles = catalog.appendingPathComponent("Tiles.spriteatlas")
 folder(tiles)
-let dungeon = map.sheets["tiny-dungeon"]!
-for index in 0..<(dungeon.columns * dungeon.rows) {
-    imageset(tile("tiny-dungeon", index), named: String(format: "tiny-dungeon_%04d", index), in: tiles)
-}
+let dungeonCount = packTiles("tiny-dungeon", into: tiles)
+let townCount = packTiles("tiny-town", into: tiles)
 
 let fonts = root.appendingPathComponent("App/Fonts")
 try? fileManager.createDirectory(at: fonts, withIntermediateDirectories: true)
@@ -172,4 +185,4 @@ let font = fonts.appendingPathComponent("KenneyPixel.ttf")
 try? fileManager.removeItem(at: font)
 try fileManager.copyItem(at: vendor.appendingPathComponent("fonts/Kenney Pixel.ttf"), to: font)
 
-print("assets: \(written) sprites, \(dungeon.columns * dungeon.rows) tiles, \(gaps.count) gaps -> \(catalog.path)")
+print("assets: \(written) sprites, \(dungeonCount) dungeon tiles, \(townCount) town tiles, \(gaps.count) gaps -> \(catalog.path)")

@@ -12,6 +12,19 @@ public struct ItemSave: Codable, Sendable, Equatable {
     public var locked: Bool
     public var favorite: Bool
     public var glyphSockets: [String]
+
+    public init(id: String, definition: String, itemLevel: Int, rarity: String, quality: String, affixes: [String], signature: String?, locked: Bool, favorite: Bool, glyphSockets: [String]) {
+        self.id = id
+        self.definition = definition
+        self.itemLevel = itemLevel
+        self.rarity = rarity
+        self.quality = quality
+        self.affixes = affixes
+        self.signature = signature
+        self.locked = locked
+        self.favorite = favorite
+        self.glyphSockets = glyphSockets
+    }
 }
 
 public struct TacticSave: Codable, Sendable, Equatable {
@@ -41,12 +54,59 @@ public struct ReliquarySave: Codable, Sendable, Equatable {
 }
 
 public struct InventorySave: Codable, Sendable, Equatable {
+    public static let bagCapacity = 40
+
     public var bag: [ItemSave]
     public var stash: [ItemSave]
     public var gold: Double
     public var dust: Double
     public var shards: Double
     public var embers: Double
+    /// Rares since the last Unique. Missing on older schema-1 files, which start the streak over.
+    public var lootPity: Int
+
+    public init(bag: [ItemSave], stash: [ItemSave], gold: Double, dust: Double, shards: Double, embers: Double, lootPity: Int = 0) {
+        self.bag = bag
+        self.stash = stash
+        self.gold = gold
+        self.dust = dust
+        self.shards = shards
+        self.embers = embers
+        self.lootPity = lootPity
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case bag, stash, gold, dust, shards, embers, lootPity
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        bag = try container.decode([ItemSave].self, forKey: .bag)
+        stash = try container.decode([ItemSave].self, forKey: .stash)
+        gold = try container.decode(Double.self, forKey: .gold)
+        dust = try container.decode(Double.self, forKey: .dust)
+        shards = try container.decode(Double.self, forKey: .shards)
+        embers = try container.decode(Double.self, forKey: .embers)
+        lootPity = try container.decodeIfPresent(Int.self, forKey: .lootPity) ?? 0
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(bag, forKey: .bag)
+        try container.encode(stash, forKey: .stash)
+        try container.encode(gold, forKey: .gold)
+        try container.encode(dust, forKey: .dust)
+        try container.encode(shards, forKey: .shards)
+        try container.encode(embers, forKey: .embers)
+        try container.encode(lootPity, forKey: .lootPity)
+    }
+
+    /// Keeps the item when the bag has room. Uniques are admitted ahead of other rarities by the caller.
+    public mutating func store(_ item: ItemSave) -> Bool {
+        guard bag.count < Self.bagCapacity else { return false }
+        bag.append(item)
+        return true
+    }
 }
 
 public struct LoadoutSave: Codable, Sendable, Equatable {
@@ -116,6 +176,10 @@ public struct SaveGame: Codable, Sendable, Equatable {
     public var companions: [CompanionExpeditionSave]
     public var inn: InnSave
     public var gameplay: GameplayPrefs
+    /// Highest Depth a Delve may enter. Deep Rift clears at this Depth raise it.
+    public var bestDepth: Int = 1
+    /// Next seed the gate will use. Launch arguments bypass it.
+    public var runSeed: Int = 1
 
     public static func newGame(biomeTableVersion: Int = 1) -> SaveGame {
         SaveGame(
@@ -150,11 +214,23 @@ public enum SaveError: Error, Equatable {
 
 public enum SaveMigrator {
     public static func load(_ data: Data) throws -> SaveGame {
-        let save = try JSONDecoder().decode(SaveGame.self, from: data)
+        let save = try JSONDecoder().decode(SaveGame.self, from: fillingDefaults(data))
         guard save.schemaVersion == SaveGame.schemaVersion else {
             throw SaveError.unsupportedSchema(save.schemaVersion)
         }
         return save
+    }
+
+    /// Schema 1 grew bestDepth, runSeed, and hero.bankedGlyphPoints. Older files omit them.
+    static func fillingDefaults(_ data: Data) -> Data {
+        guard var object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return data }
+        if object["bestDepth"] == nil { object["bestDepth"] = 1 }
+        if object["runSeed"] == nil { object["runSeed"] = 1 }
+        if var hero = object["hero"] as? [String: Any] {
+            if hero["bankedGlyphPoints"] == nil { hero["bankedGlyphPoints"] = 0 }
+            object["hero"] = hero
+        }
+        return (try? JSONSerialization.data(withJSONObject: object)) ?? data
     }
 }
 

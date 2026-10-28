@@ -2,9 +2,12 @@
 public enum CellarFight {
     public static let tuning = Tuning(
         proposal: true,
-        combat: CombatTuning(p0: 10, hp0: 15, dmg0: 8, h0: 100, critChance: 0.05, critDamage: 0.5),
+        combat: CombatTuning(p0: 10, hp0: 15, dmg0: 8, h0: 160, critChance: 0.05, critDamage: 0.5),
         heroXP: XPCurveTuning(base: 100, growth: 1.08),
         paragonXP: XPCurveTuning(base: 1000, growth: 1.02),
+        riftGold: 25,
+        heroHPPerLevel: 8,
+        smith: SmithTuning(commonDust: 5, rareShards: 2, uniqueEmbers: 1, raiseDust: 8, raiseGold: 10, raiseGrowth: 1.12),
         soulRegenPerSecond: 1,
         room: RoomTuning(
             heroTilesPerSecond: 3.2, heroReactionSeconds: 0.25, swapTiles: 3,
@@ -12,7 +15,7 @@ public enum CellarFight {
             projectileTilesPerSecond: 10, boltTilesPerSecond: 6,
             fodderAttackSeconds: 2, bruteRecoverySeconds: 1.5, rangedAttackSeconds: 1.8,
             bruteHitPoints: 4, rangedHitPoints: 2, eliteHitPoints: 3, bruteDamage: 2.2, slamRadius: 1.2,
-            potionHeal: 0.4, potionCooldown: 8, potionCharges: 3, potionRefillPerWave: 1,
+            potionHeal: 0.55, potionCooldown: 8, potionCharges: 3, potionRefillPerWave: 1,
             startingSouls: 100, waveDelaySeconds: 2, championEvery: 3
         )
     )
@@ -48,7 +51,7 @@ public enum CellarFight {
     public static let tactics = [
         TacticRule(TacticCondition(kind: "selfHPBelow", value: 0.35), TacticAction(kind: "potion")),
         TacticRule(TacticCondition(kind: "eliteWithin", tiles: 4), TacticAction(kind: "relic", relic: "lantern_ward")),
-        TacticRule(TacticCondition(kind: "enemiesWithin", count: 3, tiles: 3), TacticAction(kind: "relic", relic: "ember_flask")),
+        TacticRule(TacticCondition(kind: "enemiesWithin", count: 5, tiles: 2), TacticAction(kind: "relic", relic: "ember_flask")),
     ]
 
     public static func mob(_ id: String, _ role: String, telegraph: Double? = nil) -> MobDefinition {

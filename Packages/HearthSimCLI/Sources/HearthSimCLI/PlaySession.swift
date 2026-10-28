@@ -2,12 +2,19 @@ import Darwin
 import Foundation
 import HearthCore
 
-/// One cellar fight on stdin. Each line is a JSON op; each reply is one JSON line.
+/// One rift on stdin. Each line is a JSON op; each reply is one JSON line.
 struct PlaySession {
-    private var world: SimWorld
+    private var setup: RoomSetup
+    private var world: RiftWorld
 
-    init(seed: UInt64) {
-        world = SimWorld(seed: seed, setup: CellarFight.setup())
+    init(seed: UInt64, setup: RoomSetup) {
+        var setup = setup
+        if var rift = setup.rift {
+            rift.floors = RiftFloors.count(for: seed)
+            setup.rift = rift
+        }
+        self.setup = setup
+        world = RiftWorld(seed: seed, setup: setup)
     }
 
     func run() -> Int32 {
@@ -44,7 +51,13 @@ struct PlaySession {
             return ok(step(ticks: 1, commands: [command]))
         case "restart":
             let seed = u64(object, "seed") ?? (world.seed &+ 1)
-            world = SimWorld(seed: seed, setup: CellarFight.setup())
+            var next = setup
+            if var rift = next.rift {
+                rift.floors = RiftFloors.count(for: seed)
+                next.rift = rift
+            }
+            setup = next
+            world = RiftWorld(seed: seed, setup: next)
             return ok(render(events: []))
         default:
             return ["ok": false, "error": "unknown op \(op)"]
@@ -59,7 +72,7 @@ struct PlaySession {
             let snapshot = world.step(commands: pending)
             pending = []
             events.append(contentsOf: snapshot.events)
-            if snapshot.heroDown { break }
+            if snapshot.heroDown || snapshot.riftResult != nil { break }
         }
         return render(events: events)
     }
@@ -69,7 +82,13 @@ struct PlaySession {
         let hero = snapshot.entities.first { $0.kind == .hero }
         var lines: [String] = []
         let seconds = Double(snapshot.tick) / 20
-        lines.append("tick \(snapshot.tick) · \(fmt(seconds))s · wave \(snapshot.wave) · kills \(snapshot.kills) · seed \(snapshot.seed)\(snapshot.heroDown ? " · DOWN" : "")")
+        lines.append("tick \(snapshot.tick) · \(fmt(seconds))s · floor \(snapshot.floor)/\(snapshot.floorCount) · room \(snapshot.roomID) · meter \(Int((snapshot.meter * 100).rounded()))% · wave \(snapshot.wave) · kills \(snapshot.kills) · seed \(snapshot.seed)\(snapshot.heroDown ? " · DOWN" : "")")
+        if let result = snapshot.riftResult {
+            lines.append(result.message)
+            if result.loot.isEmpty == false {
+                lines.append(result.loot.joined(separator: " · "))
+            }
+        }
         if let hero {
             lines.append("You \(fmt(hero.x)), \(fmt(hero.y)) · \(Int(snapshot.heroHP.rounded()))/\(Int(snapshot.heroMaxHP.rounded())) · shield \(Int(snapshot.shield.rounded())) · souls \(Int(snapshot.souls.rounded()))")
         }
@@ -161,6 +180,8 @@ struct PlaySession {
         case .shooter: "shooter"
         case .projectile: "shot"
         case .zone: "zone"
+        case .stairs: "stairs"
+        case .guardian: "guardian"
         }
     }
 

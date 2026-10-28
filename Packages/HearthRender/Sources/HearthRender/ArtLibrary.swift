@@ -7,6 +7,10 @@ import SpriteKit
 final class ArtLibrary {
     let disc: SKTexture
     let ring: SKTexture
+    /// A thick rim so a telegraph reads as an edge, not a hairline.
+    let boldRing: SKTexture
+    /// A wide annulus, for ring-shaped attacks that should still look filled.
+    let band: SKTexture
     let glow: SKTexture
     let shadow: SKTexture
     let vignette: SKTexture
@@ -57,6 +61,16 @@ final class ArtLibrary {
             context.setStrokeColor(CGColor(gray: 1, alpha: 1))
             context.setLineWidth(3)
             context.strokeEllipse(in: CGRect(x: 2.5, y: 2.5, width: size - 5, height: size - 5))
+        }
+        boldRing = Self.draw(size: 64, smooth: true) { context, size in
+            context.setStrokeColor(CGColor(gray: 1, alpha: 1))
+            context.setLineWidth(8)
+            context.strokeEllipse(in: CGRect(x: 5, y: 5, width: size - 10, height: size - 10))
+        }
+        band = Self.draw(size: 64, smooth: true) { context, size in
+            context.setStrokeColor(CGColor(gray: 1, alpha: 1))
+            context.setLineWidth(22)
+            context.strokeEllipse(in: CGRect(x: 12, y: 12, width: size - 24, height: size - 24))
         }
         glow = Self.gradient(size: 64, inner: 1, outer: 0)
         vignette = Self.gradient(size: 128, inner: 0, outer: 1, color: CGColor(red: 0.06, green: 0.04, blue: 0.1, alpha: 1), start: 0.55)

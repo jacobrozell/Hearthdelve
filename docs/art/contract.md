@@ -16,7 +16,7 @@ Room chunks are 16×16, authored in Tiled, and exported as JSON (`Content/schema
 
 ## Pipeline
 
-`swift scripts/build-atlas.swift` reads `kenney-map.json` and writes `App/Assets.xcassets`: `Hearth.spriteatlas` (contract sprites, composed from layers when an entry has `layers`) and `Tiles.spriteatlas` (every Tiny Dungeon tile, named `tiny-dungeon_NNNN`). Asset names are the contract id with `.` replaced by `_`. Gaps render as a magenta-outlined placeholder, so missing art never crashes. Re-run the script after editing the map. The commission brief is `style-key.md`.
+`swift scripts/build-atlas.swift` reads `kenney-map.json` and writes `App/Assets.xcassets`: `Hearth.spriteatlas` (contract sprites, composed from layers when an entry has `layers`) and `Tiles.spriteatlas` (every Tiny Dungeon tile, named `tiny-dungeon_NNNN`, and every Tiny Town tile, named `tiny-town_NNNN`). Asset names are the contract id with `.` replaced by `_`. Gaps render as a magenta-outlined placeholder, so missing art never crashes. Re-run the script after editing the map. `swift scripts/build-atlas.swift town` adds the Tiny Town tiles without rebuilding the rest. The commission brief is `style-key.md`.
 
 The hero is Roguelike Characters layers `0` (body), `3, 4, 6, 19` (outfit and hair), plus `368` (sword) or `52` (bow). The render shows the sword when a target is within 3 tiles and the bow otherwise.
 

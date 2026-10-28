@@ -24,6 +24,7 @@ final class CoreTests: XCTestCase {
         XCTAssertEqual(Tactics.firstMatch(rules, context, ready: { $0.kind != "potion" }), 1)
         context.hpFraction = 0.9
         context.eliteDistances = []
+        context.enemyDistances = [1, 1, 1.2, 1.4, 1.6, 16]
         XCTAssertEqual(Tactics.firstMatch(rules, context, ready: { _ in true }), 2)
         context.enemyDistances = [1, 4]
         XCTAssertNil(Tactics.firstMatch(rules, context, ready: { _ in true }))
@@ -32,7 +33,8 @@ final class CoreTests: XCTestCase {
     func testTacticRuleDecodesIfThen() throws {
         let json = #"{"if":{"kind":"enemiesWithin","count":3,"tiles":3},"then":{"kind":"relic","relic":"ember_flask"}}"#
         let rule = try JSONDecoder().decode(TacticRule.self, from: Data(json.utf8))
-        XCTAssertEqual(rule, Fixture.tactics[2])
+        let flask = TacticRule(TacticCondition(kind: "enemiesWithin", count: 3, tiles: 3), TacticAction(kind: "relic", relic: "ember_flask"))
+        XCTAssertEqual(rule, flask)
     }
 
     func testCurvePins() {
@@ -82,6 +84,36 @@ final class CoreTests: XCTestCase {
         XCTAssertEqual(CombatMath.level(depth: 10), 70)
         XCTAssertFalse(CombatRoll.dodged(roll: 1, chance: 0))
         XCTAssertTrue(CombatRoll.dodged(roll: 1, chance: 1))
+    }
+
+    func testParGearIsTheBaselineAndBetterGearChangesTheBand() {
+        XCTAssertEqual(BuildForecast.multiplier(depth: 1, weapons: [], p0: 10), 1)
+        XCTAssertEqual(BuildForecast.band(depth: 1, weapons: [], p0: 10), .hard)
+        let strong = LootItem.plain(id: "a", name: "Sword", slot: "melee", itemLevel: 40, definition: "sword")
+        let pair = [strong, LootItem.plain(id: "b", name: "Bow", slot: "ranged", itemLevel: 40, definition: "bow")]
+        XCTAssertGreaterThan(BuildForecast.multiplier(depth: 1, weapons: pair, p0: 10), 1)
+        XCTAssertEqual(BuildForecast.band(depth: 1, weapons: pair, p0: 10), .easy)
+        XCTAssertEqual(BiomeName.display(id: "drowned_library", echo: false), "Drowned Library")
+        XCTAssertEqual(BiomeName.display(id: "mossy_cellars", echo: true), "Echo Mossy Cellars")
+    }
+
+    func testDepthAdvancesOnlyOnAFrontierClear() {
+        XCTAssertEqual(DepthRules.nextBest(best: 4, foughtAt: 4, delta: 3, died: false), 7)
+        XCTAssertEqual(DepthRules.nextBest(best: 4, foughtAt: 4, delta: 3, died: true), 4)
+        XCTAssertEqual(DepthRules.nextBest(best: 4, foughtAt: 2, delta: 3, died: false), 4)
+        XCTAssertEqual(DepthRules.nextBest(best: 4, foughtAt: 4, delta: 0, died: false), 4)
+        XCTAssertTrue(DepthRules.delveAllowed(depth: 30, best: 30))
+        XCTAssertTrue(DepthRules.deepRiftAllowed(depth: 25, best: 30))
+        XCTAssertFalse(DepthRules.deepRiftAllowed(depth: 26, best: 30))
+    }
+
+    func testPowerScaleOfOneLeavesTheFight() {
+        var scaled = CellarFight.setup()
+        scaled.powerScale = 1
+        let plain = RoomRun.run(seed: 1, setup: CellarFight.setup(), ticks: 40).hash
+        XCTAssertEqual(RoomRun.run(seed: 1, setup: scaled, ticks: 40).hash, plain)
+        scaled.powerScale = 4
+        XCTAssertNotEqual(RoomRun.run(seed: 1, setup: scaled, ticks: 40).hash, plain)
     }
 
     func testDifficultyBands() {

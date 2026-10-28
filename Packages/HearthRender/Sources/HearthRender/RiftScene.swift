@@ -146,8 +146,8 @@ public final class RiftScene: SKScene {
             actors[id] = nil
         }
 
-        sync(current.telegraphs.map { ($0.id, $0.x, $0.y, $0.radius, $0.progress, $0.slam ? "slam" : "bolt") }, into: &telegraphs, telegraph: true)
-        sync(current.grounds.map { ($0.id, $0.x, $0.y, $0.radius, $0.life, $0.element) }, into: &grounds, telegraph: false)
+        sync(current.telegraphs.map { ($0.id, $0.x, $0.y, $0.radius, $0.progress, $0.slam ? "slam" : "bolt", $0.shape) }, into: &telegraphs, telegraph: true)
+        sync(current.grounds.map { ($0.id, $0.x, $0.y, $0.radius, $0.life, $0.element, "circle") }, into: &grounds, telegraph: false)
 
         heroLight.position = heroPoint
         heroLight.alpha = 0.18 + 0.04 * CGFloat(sin(currentTime * 3))
@@ -167,9 +167,9 @@ public final class RiftScene: SKScene {
         return node
     }
 
-    private func sync(_ items: [(UInt32, Double, Double, Double, Double, String)], into store: inout [UInt32: MarkNode], telegraph: Bool) {
+    private func sync(_ items: [(UInt32, Double, Double, Double, Double, String, String)], into store: inout [UInt32: MarkNode], telegraph: Bool) {
         var seen = Set<UInt32>()
-        for (id, x, y, radius, amount, kind) in items {
+        for (id, x, y, radius, amount, kind, shape) in items {
             seen.insert(id)
             let node = store[id] ?? {
                 let made = MarkNode(art: art, color: telegraph ? Palette.telegraph(kind) : Palette.element(kind), telegraph: telegraph)
@@ -178,7 +178,7 @@ public final class RiftScene: SKScene {
                 return made
             }()
             node.position = CGPoint(x: CGFloat(x) * Self.tile, y: CGFloat(y) * Self.tile)
-            node.set(radius: CGFloat(radius) * Self.tile, amount: CGFloat(amount))
+            node.set(radius: CGFloat(radius) * Self.tile, amount: CGFloat(amount), shape: shape)
         }
         for (id, node) in store where seen.contains(id) == false {
             node.removeFromParent()
@@ -268,20 +268,43 @@ public final class RiftScene: SKScene {
 
     private func layoutCamera() {
         vignette.size = CGSize(width: size.width * 1.6, height: size.height * 1.3)
+        let play = size.height - hudInset - topInset
+        guard roomSize.height > 1, play > 1 else { return }
+        // The floor fills the space between the debug line and the controls.
+        cameraNode.setScale(roomSize.height / play)
     }
 
+    /// Points from the bottom of the screen covered by the SwiftUI HUD.
+    private var hudInset: CGFloat {
+        max(168, size.height * 0.20)
+    }
+
+    /// Points kept clear at the top for the seed line, the meter, and Depth.
+    private var topInset: CGFloat { 108 }
+
     private func follow(_ hero: CGPoint) {
-        // The HUD covers the bottom of the screen, so the room is framed in the space above it.
-        let hud = size.height * 0.24
-        let x = roomSize.width <= size.width
+        layoutCamera()
+        let scale = cameraNode.xScale
+        let viewW = size.width * scale
+        let viewH = size.height * scale
+        let hud = hudInset * scale
+        let halfW = viewW / 2
+        let x = roomSize.width <= viewW
             ? roomSize.width / 2
-            : min(max(hero.x, size.width / 2), roomSize.width - size.width / 2)
-        let low = size.height / 2 - hud
-        let high = roomSize.height - size.height / 2
-        let y = low > high ? roomSize.height / 2 - hud / 2 : min(max(hero.y - hud / 2, low), high)
+            : min(max(hero.x, halfW), roomSize.width - halfW)
+        // Room bottom (y = 0) sits on the top of the HUD.
+        let seated = viewH / 2 - hud
+        let high = roomSize.height - viewH / 2
+        let y = seated > high ? seated : min(max(hero.y - hud / 2, seated), high)
         let target = CGPoint(x: x, y: y)
         let position = cameraNode.position
-        cameraNode.position = CGPoint(x: position.x + (target.x - position.x) * 0.15, y: position.y + (target.y - position.y) * 0.15)
+        let dx = target.x - position.x
+        let dy = target.y - position.y
+        if abs(dx) + abs(dy) > viewW {
+            cameraNode.position = target
+        } else {
+            cameraNode.position = CGPoint(x: position.x + dx * 0.15, y: position.y + dy * 0.15)
+        }
     }
 }
 
@@ -334,6 +357,17 @@ final class ActorNode: SKNode {
             barFill = nil
         }
         super.init()
+        if pose.kind == .guardian {
+            body.size = CGSize(width: tile * 2, height: tile * 2)
+        }
+        if pose.kind == .stairs {
+            body.texture = art.glow
+            body.shader = nil
+            body.color = SKColor(red: 0.98, green: 0.78, blue: 0.32, alpha: 1)
+            body.colorBlendFactor = 1
+            body.blendMode = .add
+            body.size = CGSize(width: tile * 1.1, height: tile * 1.1)
+        }
         if pose.kind == .projectile {
             body.anchorPoint = CGPoint(x: 0.5, y: 0.5)
             body.size = CGSize(width: tile * 0.75, height: tile * 0.75)
@@ -400,7 +434,7 @@ final class ActorNode: SKNode {
         body.yScale = squash
         body.alpha = alpha
         if body.shader != nil {
-            let tint: SIMD4<Float> = pose.rooted ? SIMD4(0.45, 0.85, 0.4, 0.45) : pose.stunned ? SIMD4(1, 0.9, 0.4, 0.45) : .zero
+            let tint: SIMD4<Float> = pose.enraged ? SIMD4(1, 0.28, 0.16, 0.7) : pose.rooted ? SIMD4(0.45, 0.85, 0.4, 0.45) : pose.stunned ? SIMD4(1, 0.9, 0.4, 0.45) : .zero
             body.setValue(SKAttributeValue(float: Float(flash)), forAttribute: "a_flash")
             body.setValue(SKAttributeValue(vectorFloat4: tint), forAttribute: "a_tint")
         }
@@ -425,19 +459,33 @@ final class ActorNode: SKNode {
 final class MarkNode: SKNode {
     private let fill: SKSpriteNode
     private let edge: SKSpriteNode
+    private let core: SKSpriteNode
     private let glow: SKSpriteNode?
+    private let disc: SKTexture
+    private let boldRing: SKTexture
+    private let band: SKTexture
     private let telegraph: Bool
+    private let color: SKColor
 
     init(art: ArtLibrary, color: SKColor, telegraph: Bool) {
         self.telegraph = telegraph
+        self.color = color
+        disc = art.disc
+        boldRing = art.boldRing
+        band = art.band
         fill = SKSpriteNode(texture: art.disc)
         fill.color = color
         fill.colorBlendFactor = 1
-        fill.alpha = telegraph ? 0.45 : 0.28
-        edge = SKSpriteNode(texture: art.ring)
+        fill.alpha = telegraph ? 0.5 : 0.28
+        edge = SKSpriteNode(texture: telegraph ? art.boldRing : art.ring)
         edge.color = color
         edge.colorBlendFactor = 1
-        edge.alpha = 0.95
+        edge.alpha = 1
+        core = SKSpriteNode(texture: art.disc)
+        core.color = color
+        core.colorBlendFactor = 1
+        core.alpha = telegraph ? 0.45 : 0
+        core.isHidden = telegraph == false
         if telegraph {
             glow = nil
         } else {
@@ -450,8 +498,9 @@ final class MarkNode: SKNode {
         }
         super.init()
         if let glow { addChild(glow) }
-        addChild(fill)
         addChild(edge)
+        addChild(fill)
+        addChild(core)
     }
 
     @available(*, unavailable)
@@ -459,14 +508,43 @@ final class MarkNode: SKNode {
         nil
     }
 
-    func set(radius: CGFloat, amount: CGFloat) {
-        let size = CGSize(width: radius * 2, height: radius * 2)
-        edge.size = size
+    func set(radius: CGFloat, amount: CGFloat, shape: String = "circle") {
+        let side = max(4, radius * 2)
+        let size = CGSize(width: side, height: side)
         if telegraph {
-            fill.size = CGSize(width: size.width * max(0.05, amount), height: size.height * max(0.05, amount))
-            edge.alpha = 0.6 + 0.4 * amount
+            let square = shape == "square"
+            let ring = shape == "ring"
+            if square {
+                fill.texture = nil
+                fill.color = color
+                fill.colorBlendFactor = 1
+                edge.texture = nil
+                edge.color = color
+                edge.colorBlendFactor = 1
+                edge.size = CGSize(width: side * 1.16, height: side * 1.16)
+                fill.size = size
+                fill.alpha = 0.58
+                edge.alpha = 1
+                core.isHidden = true
+            } else {
+                fill.texture = ring ? band : disc
+                fill.color = color
+                fill.colorBlendFactor = 1
+                edge.texture = boldRing
+                edge.color = color
+                edge.colorBlendFactor = 1
+                fill.size = size
+                edge.size = size
+                fill.alpha = ring ? 0.85 : 0.5
+                edge.alpha = 1
+                core.isHidden = false
+                let grow = max(0.22, amount)
+                core.size = CGSize(width: side * grow, height: side * grow)
+                core.alpha = 0.35 + 0.45 * amount
+            }
         } else {
             fill.size = size
+            edge.size = size
             glow?.size = CGSize(width: size.width * 1.4, height: size.height * 1.4)
             alpha = min(1, 0.3 + amount * 2)
         }

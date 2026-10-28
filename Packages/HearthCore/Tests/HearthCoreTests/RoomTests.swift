@@ -11,6 +11,14 @@ final class RoomTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(hit * 2, hp)
     }
 
+    func testLineOfSightDoesNotSkipAPillarCorner() {
+        let width = 16
+        var blocked = Array(repeating: false, count: width * width)
+        blocked[5 * width + 4] = true
+        XCTAssertFalse(RoomPath.clearLine(blocked: blocked, width: width, height: width, from: 3.58, 4.49, to: 9.50, 6.67))
+        XCTAssertTrue(RoomPath.clearLine(blocked: blocked, width: width, height: width, from: 3.58, 4.49, to: 9.50, 4.60))
+    }
+
     func testSpawnsStandOnOpenTiles() {
         let room = RoomState(seed: 9, setup: Fixture.setup())
         for actor in room.actors {
@@ -20,11 +28,11 @@ final class RoomTests: XCTestCase {
 
     func testGoldenSeeds() {
         let golden: [UInt64: UInt64] = [
-            1: 13_948_987_823_554_681_147,
-            2: 2_373_592_596_909_882_594,
-            3: 9_444_094_118_426_202_281,
-            42: 2_704_896_790_383_049_619,
-            2026: 7_564_628_698_584_743_757,
+            1: 14_076_842_604_159_223_478,
+            2: 9_851_072_359_244_471_101,
+            3: 12_547_611_961_086_281_392,
+            42: 1_252_922_841_159_116_040,
+            2026: 4_599_090_690_707_021_514,
         ]
         for seed in golden.keys.sorted() {
             let hash = RoomRun.run(seed: seed, setup: Fixture.setup(), ticks: 1200).hash

@@ -41,6 +41,7 @@ public struct ContentCatalog: Sendable {
     public var buildings: [BuildingDefinition]
     public var affixes: [EliteAffixDefinition]
     public var affixBans: [[String]]
+    public var itemAffixes: [ItemAffixDefinition]
     public var events: [RiftEventDefinition]
     public var loadouts: [LoadoutFixture]
     public var tactics: [TacticPreset]
@@ -90,6 +91,7 @@ public struct ContentCatalog: Sendable {
             buildings: try decode([BuildingDefinition].self, "buildings.json"),
             affixes: affixFile.affixes,
             affixBans: affixFile.bans,
+            itemAffixes: try decode([ItemAffixDefinition].self, "item-affixes.json"),
             events: try decode([RiftEventDefinition].self, "events.json"),
             loadouts: try decode([LoadoutFixture].self, "loadouts.json"),
             tactics: try decode([TacticPreset].self, "tactics.json"),
@@ -102,6 +104,22 @@ public struct ContentCatalog: Sendable {
     }
 
     // MARK: Room setups
+
+    /// Cinderfang plus one armor Unique and one Relic Unique. All three already have opcodes.
+    public static let m1UniqueIDs = ["cinderfang", "thornwrap", "brimful_flask"]
+
+    public func lootTable(pity: Int, equipped: [LootItem], idPrefix: String) -> LootTable {
+        let bases = weapons.map { LootBase(id: $0.id, name: $0.name, slot: $0.kind.rawValue) }
+            + relics.map { LootBase(id: $0.id, name: $0.name, slot: "relic") }
+            + [("helm", "Helm"), ("chest", "Chest"), ("legs", "Legs"), ("boots", "Boots")].map { LootBase(id: $0.0, name: $0.1, slot: $0.0) }
+        let uniques = Self.m1UniqueIDs.compactMap { id in uniques.first { $0.id == id } }.map { LootUnique(id: $0.id, name: $0.name, slot: $0.slot) }
+        return LootTable(bases: bases, affixes: itemAffixes, uniques: uniques, equipped: equipped, pity: pity, idPrefix: idPrefix)
+    }
+
+    /// The eight Mossy room templates, in id order so a seed builds the same graph everywhere.
+    public func mossyRooms() -> [RoomTemplate] {
+        rooms.filter { $0.id.hasPrefix("mossy_") && $0.width == 16 && $0.height == 16 }.sorted { $0.id < $1.id }
+    }
 
     /// The one-room M0 fight, resolved from `m0.json`.
     public func m0Setup() throws -> RoomSetup {
@@ -441,6 +459,21 @@ public struct ContentCatalog: Sendable {
                     issues.append(.badReference("Loadout \(loadout.id) Tactics fire \(rule.action.relic ?? "") it does not carry"))
                 }
             }
+        }
+
+        for affix in itemAffixes {
+            if EffectCatalog.stats.contains(affix.stat) == false {
+                issues.append(.badReference("Item affix \(affix.id) has unknown stat \(affix.stat)"))
+            }
+            if affix.slots.isEmpty || affix.min > affix.max {
+                issues.append(.badReference("Item affix \(affix.id) needs a slot and a range"))
+            }
+            for slot in affix.slots where EffectCatalog.slots.contains(slot) == false {
+                issues.append(.badReference("Item affix \(affix.id) has unknown slot \(slot)"))
+            }
+        }
+        for id in Self.m1UniqueIDs where uniques.contains(where: { $0.id == id }) == false {
+            issues.append(.missing("M1 loot is missing Unique \(id)"))
         }
 
         for room in rooms {

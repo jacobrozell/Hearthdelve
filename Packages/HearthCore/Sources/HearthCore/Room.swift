@@ -12,11 +12,20 @@ public struct RoomSetup: Sendable, Equatable {
     public var fodder: MobDefinition
     public var brute: MobDefinition
     public var shooter: MobDefinition
+    /// Set by a Rift. A plain room leaves this nil and fights exactly as before.
+    public var rift: RiftConfig?
+    /// Extra hit points from equipped armor. Zero leaves the cellar fight unchanged.
+    public var bonusHP: Double
+    /// Armor rating from equipped armor. Zero leaves incoming damage unchanged.
+    public var armor: Double
+    /// Weapon damage versus a par item level at this Depth. 1 leaves the cellar fight unchanged.
+    public var powerScale: Double
 
     public init(
         room: RoomTemplate, tuning: Tuning, depth: Int, melee: WeaponDefinition, ranged: WeaponDefinition,
         relics: [RelicDefinition], tactics: [TacticRule], signatures: [SignatureSpec] = [],
-        fodder: MobDefinition, brute: MobDefinition, shooter: MobDefinition
+        fodder: MobDefinition, brute: MobDefinition, shooter: MobDefinition, rift: RiftConfig? = nil,
+        bonusHP: Double = 0, armor: Double = 0, powerScale: Double = 1
     ) {
         self.room = room
         self.tuning = tuning
@@ -29,6 +38,10 @@ public struct RoomSetup: Sendable, Equatable {
         self.fodder = fodder
         self.brute = brute
         self.shooter = shooter
+        self.rift = rift
+        self.bonusHP = bonusHP
+        self.armor = armor
+        self.powerScale = powerScale > 0 ? powerScale : 1
     }
 }
 
@@ -40,8 +53,15 @@ public enum ActorKind: UInt8, Sendable, Equatable {
     case shooter
     case projectile
     case zone
+    case stairs
+    case guardian
 
-    var creature: Bool { self != .projectile && self != .zone }
+    var creature: Bool {
+        switch self {
+        case .projectile, .zone, .stairs: false
+        default: true
+        }
+    }
 }
 
 public struct RoleStats: Sendable, Equatable {
@@ -97,6 +117,10 @@ struct Actor: Sendable {
     var hp: Double
     var maxHP: Double
     var elite = false
+    var rare = false
+    var mechanicIndex = 0
+    var shape = ""
+    var enraged = false
     var sprite: String
     var wait = 0
     var windup = 0
@@ -162,8 +186,9 @@ struct RoomNumbers: Sendable {
     init(setup: RoomSetup) {
         let tuning = setup.tuning
         var curves = BalanceCurves(through: max(setup.depth + 10, 1))
-        power = curves.weaponPower(p0: tuning.combat.p0, itemLevel: setup.depth + 10)
-        heroHP = curves.heroHitPoints(h0: tuning.combat.h0, itemLevel: setup.depth + 10)
+        let par = curves.weaponPower(p0: tuning.combat.p0, itemLevel: setup.depth + 10)
+        power = par * (setup.powerScale > 0 ? setup.powerScale : 1)
+        heroHP = curves.heroHitPoints(h0: tuning.combat.h0, itemLevel: setup.depth + 10) + setup.bonusHP
         fodderHP = curves.enemyHitPoints(hp0: tuning.combat.hp0, depth: setup.depth)
         enemyDamage = curves.enemyDamageAmount(dmg0: tuning.combat.dmg0, depth: setup.depth)
         meleePeriod = max(1, RoomMath.ticks(1 / setup.melee.attacksPerSecond))
@@ -183,11 +208,11 @@ struct RoomNumbers: Sendable {
 }
 
 struct RoomState: Sendable {
-    let setup: RoomSetup
+    var setup: RoomSetup
     let numbers: RoomNumbers
     let width: Int
     let height: Int
-    let blocked: [Bool]
+    var blocked: [Bool]
     var streams: RNGStreams
     var tick = 0
     var actors: [Actor] = []
@@ -212,6 +237,10 @@ struct RoomState: Sendable {
     var kills = 0
     var killHash = FNV64()
     var heroDown = false
+    var killCredits: [KillCredit] = []
+    var stairs: (x: Double, y: Double)?
+    var holdWaves = false
+    var tookStairs = false
     var hookCounters: [Int]
     var hookDepth = 0
     var flow: (sx: [Int8], sy: [Int8]) = ([], [])
@@ -241,6 +270,7 @@ struct RoomState: Sendable {
 
     mutating func advance(_ commands: [SimCommand]) {
         tick += 1
+        killCredits.removeAll(keepingCapacity: true)
         for index in actors.indices { actors[index].moved = false }
         if heroDown == false {
             apply(commands)
@@ -286,7 +316,7 @@ struct RoomState: Sendable {
         if tick % RoomMath.ticksPerSecond == 0 {
             souls = min(SoulRules.cap, souls + setup.tuning.soulRegenPerSecond)
         }
-        if waveTimer > 0, heroDown == false {
+        if waveTimer > 0, heroDown == false, holdWaves == false {
             waveTimer -= 1
             if waveTimer == 0 { spawnWave() }
         }
@@ -360,7 +390,10 @@ struct RoomState: Sendable {
             return
         }
 
-        guard let target else { return }
+        guard let target else {
+            walkToStairs()
+            return
+        }
         let enemy = actors[target]
         let distance = dist2(hero.x, hero.y, enemy.x, enemy.y)
         let melee = numbers.meleeReach * numbers.meleeReach
@@ -429,7 +462,40 @@ struct RoomState: Sendable {
                 return (actor.aimX, actor.aimY)
             }
         }
+        for actor in actors where actor.living && actor.kind == .guardian && actor.windup > 0 {
+            guard actor.windupTotal - actor.windup >= numbers.reaction else { continue }
+            let reach = actor.radius + 0.35
+            if dist2(hero.x, hero.y, actor.aimX, actor.aimY) <= reach * reach {
+                return (actor.aimX, actor.aimY)
+            }
+        }
         return nil
+    }
+
+    private mutating func walkToStairs() {
+        guard let stairs, actors[0].living else { return }
+        if dist2(actors[0].x, actors[0].y, stairs.x, stairs.y) <= 0.45 * 0.45 {
+            tookStairs = true
+            path.removeAll()
+            return
+        }
+        let hero = actors[0]
+        let door = actors.first { $0.kind == .stairs }?.id ?? 0
+        if door != pathTarget || pathAge >= 10 {
+            pathTarget = door
+            pathAge = 0
+            path = RoomPath.astar(
+                width: width, height: height, blocked: blocked,
+                from: (Int(hero.x), Int(hero.y)), to: (Int(stairs.x), Int(stairs.y))
+            )
+        } else {
+            pathAge += 1
+        }
+        while let next = path.first, dist2(hero.x, hero.y, Double(next.0) + 0.5, Double(next.1) + 0.5) < 0.04 {
+            path.removeFirst()
+        }
+        let aim: (Double, Double) = path.count <= 1 ? (stairs.x, stairs.y) : (Double(path[0].0) + 0.5, Double(path[0].1) + 0.5)
+        steer(0, toward: aim.0, aim.1, speed: setup.tuning.room.heroTilesPerSecond)
     }
 
     private mutating func approach(_ target: Int) {
@@ -694,6 +760,9 @@ struct RoomState: Sendable {
             if crit { fire("onCrit", x: x, y: y, target: index) }
         }
         if actors[index].hp <= 0, actors[index].death == 0 {
+            if actors[index].team == 1, actors[index].kind != .guardian {
+                killCredits.append(KillCredit(kind: actors[index].kind, elite: actors[index].elite, rare: actors[index].rare))
+            }
             kill(index)
             souls = min(SoulRules.cap, souls + SoulRules.perKill + (actors[index].elite ? SoulRules.perElite : 0))
             kills += 1
@@ -734,7 +803,7 @@ struct RoomState: Sendable {
 
     private mutating func hurtHero(_ raw: Double) {
         guard actors[0].living else { return }
-        let taken = CombatMath.incoming(raw: raw, armor: 0, resist: 0, level: CombatMath.level(depth: setup.depth), reductions: [])
+        let taken = CombatMath.incoming(raw: raw, armor: setup.armor, resist: 0, level: CombatMath.level(depth: setup.depth), reductions: [])
         var remaining = taken
         if shield > 0 {
             let absorbed = min(shield, remaining)
@@ -804,6 +873,23 @@ struct RoomState: Sendable {
                     actors[index].windupTotal = RoomMath.shooterWindupTicks
                     actors[index].aimX = goalActor.x
                     actors[index].aimY = goalActor.y
+                }
+            case .guardian:
+                guard let definition = setup.rift?.guardian, definition.mechanics.isEmpty == false else { break }
+                if actors[index].wait > 0 {
+                    if distance > 1.2 * 1.2 {
+                        chase(index, goal: goal, speed: setup.tuning.room.bruteTilesPerSecond)
+                    }
+                } else {
+                    let mechanic = definition.mechanics[actors[index].mechanicIndex % definition.mechanics.count]
+                    let seconds = max(0.6, mechanic.telegraphSeconds)
+                    let wind = max(RoomMath.ticks(0.6), RoomMath.ticks(seconds))
+                    actors[index].windup = wind
+                    actors[index].windupTotal = wind
+                    actors[index].aimX = goalActor.x
+                    actors[index].aimY = goalActor.y
+                    actors[index].radius = mechanic.opcodes.compactMap(\.radius).max() ?? 1
+                    actors[index].shape = mechanic.shape
                 }
             default:
                 if distance <= 0.9 * 0.9 {
@@ -884,6 +970,57 @@ struct RoomState: Sendable {
             actors.append(bolt)
             actors[index].wait = numbers.shooterPeriod
             actors[index].flash = 6
+        } else if actor.kind == .guardian {
+            resolveGuardian(index)
+        }
+    }
+
+    /// Lands a guardian mechanic through the same opcode runner the relics use, aimed at the hero.
+    private mutating func resolveGuardian(_ index: Int) {
+        guard let definition = setup.rift?.guardian, definition.mechanics.isEmpty == false else { return }
+        let mechanic = definition.mechanics[actors[index].mechanicIndex % definition.mechanics.count]
+        runHostile(mechanic.opcodes, x: actors[index].aimX, y: actors[index].aimY)
+        actors[index].mechanicIndex += 1
+        actors[index].wait = numbers.bruteRecovery
+        actors[index].flash = 6
+    }
+
+    private mutating func runHostile(_ opcodes: [OpcodeSpec], x: Double, y: Double) {
+        for spec in opcodes {
+            guard let effect = EffectRunner.resolve(spec, power: numbers.enemyDamage, maxHP: actors[0].maxHP) else { continue }
+            switch effect {
+            case .damage(let amount, let element, let radius):
+                events.append(.burst(x: x, y: y, radius: radius, element: element))
+                let reach = radius * radius
+                if actors[0].living, dist2(actors[0].x, actors[0].y, x, y) <= reach {
+                    hurtHero(amount)
+                }
+                for other in actors.indices where actors[other].kind == .ally && actors[other].living {
+                    if dist2(actors[other].x, actors[other].y, x, y) <= reach {
+                        hurtAlly(other, amount)
+                    }
+                }
+            case .root(let radius, let duration):
+                events.append(.burst(x: x, y: y, radius: radius, element: "nature"))
+                if actors[0].living, dist2(actors[0].x, actors[0].y, x, y) <= radius * radius {
+                    actors[0].root = max(actors[0].root, RoomMath.ticks(duration))
+                }
+            case .zone(let element, let radius, let duration, let coefficient):
+                var zone = make(.zone, x: x, y: y, sprite: "fx.zone.\(element)", team: 1)
+                zone.radius = radius
+                zone.life = RoomMath.ticks(duration)
+                zone.power = numbers.enemyDamage * coefficient
+                zone.element = element
+                zone.hp = 1
+                zone.maxHP = Double(zone.life)
+                actors.append(zone)
+            case .stun(let radius, let duration):
+                if actors[0].living, radius <= 0 || dist2(actors[0].x, actors[0].y, x, y) <= radius * radius {
+                    actors[0].stun = max(actors[0].stun, RoomMath.ticks(duration))
+                }
+            default:
+                break
+            }
         }
     }
 
@@ -963,8 +1100,15 @@ struct RoomState: Sendable {
         }
         guard actors[index].power > 0, actors[index].life % RoomMath.zonePulseTicks == 0 else { return }
         let amount = actors[index].power * Double(RoomMath.zonePulseTicks) / Double(RoomMath.ticksPerSecond)
-        for other in enemies(near: actors[index].x, actors[index].y, radius: actors[index].radius) {
-            damageEnemy(other, amount, crit: false, source: .zone)
+        if actors[index].team == 1 {
+            let reach = actors[index].radius * actors[index].radius
+            if actors[0].living, dist2(actors[0].x, actors[0].y, actors[index].x, actors[index].y) <= reach {
+                hurtHero(amount)
+            }
+        } else {
+            for other in enemies(near: actors[index].x, actors[index].y, radius: actors[index].radius) {
+                damageEnemy(other, amount, crit: false, source: .zone)
+            }
         }
     }
 
@@ -989,7 +1133,7 @@ struct RoomState: Sendable {
         let shooters = wave >= 4 ? 2 : 1
         if champions {
             fodder /= 2
-            for _ in 0..<3 { spawnMob(.fodder, elite: true) }
+            for _ in 0..<2 { spawnMob(.fodder, elite: true) }
         }
         for _ in 0..<fodder { spawnMob(.fodder, elite: false) }
         for _ in 0..<brutes { spawnMob(.brute, elite: false) }
@@ -1029,8 +1173,96 @@ struct RoomState: Sendable {
         mob.hp = numbers.fodderHP * scale * (elite ? setup.tuning.room.eliteHitPoints : 1)
         mob.maxHP = mob.hp
         mob.facing = -1
-        mob.wait = RoomMath.ticks(0.5)
+        // Elites hold their first swing so the outline, the ward, and a step back are visible before the hit.
+        mob.wait = RoomMath.ticks(elite ? 1.25 : 0.5)
         actors.append(mob)
+    }
+
+    func livingHostiles() -> Int {
+        actors.filter { $0.living && $0.team == 1 && $0.kind != .guardian }.count
+    }
+
+    /// Roughly clear: nothing hostile is left standing, and the meter still has room, so the next floor is a door.
+    mutating func openStairs() {
+        guard stairs == nil, let point = farthestOpenTile() else { return }
+        stairs = point
+        holdWaves = true
+        waveTimer = 0
+        var door = make(.stairs, x: point.x, y: point.y, sprite: "tile.stairs", team: 0)
+        door.hp = 1
+        door.maxHP = 1
+        actors.append(door)
+    }
+
+    /// At 100% the guardian stands where the hero is. No definition means the phase changes and the waves stop.
+    mutating func summonGuardian() {
+        guard actors.contains(where: { $0.kind == .guardian }) == false else { return }
+        holdWaves = true
+        waveTimer = 0
+        stairs = nil
+        tookStairs = false
+        actors.removeAll { actor in
+            if actor.kind == .hero || actor.kind == .ally { return false }
+            if actor.kind == .zone, actor.team == 0 { return false }
+            return true
+        }
+        guard let definition = setup.rift?.guardian else { return }
+        var boss = make(.guardian, x: actors[0].x, y: actors[0].y, sprite: definition.sprite, team: 1)
+        let hp = GuardianRules.hitPoints(fodderHP: numbers.fodderHP, multiplier: definition.hpMultiplier)
+        boss.hp = hp
+        boss.maxHP = hp
+        boss.facing = -1
+        boss.wait = 0
+        actors.append(boss)
+    }
+
+    mutating func beginNextFloor() {
+        enter(room: setup.room)
+    }
+
+    /// Swaps the tilemap and spawns one pack. The hero keeps their hit points.
+    mutating func enter(room template: RoomTemplate) {
+        guard template.width == width, template.height == height else { return }
+        setup.room = template
+        blocked = template.blockedGrid()
+        holdWaves = false
+        stairs = nil
+        tookStairs = false
+        let hero = actors[0]
+        let kept = actors.filter { actor in
+            if actor.kind == .ally, actor.living { return true }
+            if actor.kind == .zone, actor.team == 0, actor.hp > 0 { return true }
+            return false
+        }
+        actors = [hero] + kept
+        let point = template.hero
+        actors[0].x = Double(point.x) + 0.5
+        actors[0].y = Double(height - 1 - point.y) + 0.5
+        path.removeAll()
+        pathAge = 0
+        flow = ([], [])
+        wave = 0
+        waveCleared = false
+        spawnWave()
+    }
+
+    private func farthestOpenTile() -> (x: Double, y: Double)? {
+        let hero = actors[0]
+        var best: (x: Double, y: Double)?
+        var bestDistance = 0.0
+        for y in 1..<(height - 1) {
+            for x in 1..<(width - 1) {
+                let px = Double(x) + 0.5
+                let py = Double(y) + 0.5
+                if blockedBox(px, py) { continue }
+                let distance = dist2(px, py, hero.x, hero.y)
+                if distance > bestDistance {
+                    bestDistance = distance
+                    best = (px, py)
+                }
+            }
+        }
+        return best
     }
 
     private mutating func reap() {
@@ -1103,6 +1335,9 @@ struct RoomState: Sendable {
 
     private mutating func paint() {
         for index in actors.indices {
+            if actors[index].kind == .guardian, let threshold = setup.rift?.guardian?.enrageAt {
+                actors[index].enraged = GuardianRules.isEnraged(hp: actors[index].hp, maxHP: actors[index].maxHP, at: threshold)
+            }
             let actor = actors[index]
             if actor.death > 0 || (actor.hp <= 0 && actor.kind.creature) {
                 actors[index].anim = .death
@@ -1145,7 +1380,7 @@ struct RoomState: Sendable {
     }
 
     private mutating func move(_ index: Int, _ dx: Double, _ dy: Double, speed: Double) {
-        guard actors[index].root == 0 || actors[index].kind == .hero else { return }
+        guard actors[index].root == 0 else { return }
         let step = speed * RoomMath.dt
         let nx = actors[index].x + dx * step
         let ny = actors[index].y + dy * step
@@ -1180,14 +1415,7 @@ struct RoomState: Sendable {
     }
 
     func lineOfSight(_ ax: Double, _ ay: Double, _ bx: Double, _ by: Double) -> Bool {
-        let dx = bx - ax
-        let dy = by - ay
-        let steps = Int((dx * dx + dy * dy).squareRoot() / 0.25) + 1
-        for step in 1..<steps {
-            let t = Double(step) / Double(steps)
-            if blockedPoint(ax + dx * t, ay + dy * t) { return false }
-        }
-        return true
+        RoomPath.clearLine(blocked: blocked, width: width, height: height, from: ax, ay, to: bx, by)
     }
 
     func blockedPoint(_ x: Double, _ y: Double) -> Bool {
@@ -1219,6 +1447,11 @@ struct RoomState: Sendable {
         hash.add(UInt64(waveTimer))
         hash.add(UInt64(kills))
         hash.add(killHash.value)
+        if holdWaves { hash.add(UInt64(1)) }
+        if let stairs {
+            hash.add(stairs.x.bitPattern)
+            hash.add(stairs.y.bitPattern)
+        }
         streams.layout.feed(&hash)
         streams.population.feed(&hash)
         streams.combat.feed(&hash)
@@ -1234,6 +1467,10 @@ struct RoomState: Sendable {
             hash.add(UInt64(actor.stun))
             hash.add(UInt64(actor.root))
             hash.add(UInt64(bitPattern: Int64(actor.life)))
+            if actor.kind == .guardian {
+                hash.add(UInt64(actor.mechanicIndex))
+                hash.add(UInt64(actor.enraged ? 1 : 0))
+            }
         }
     }
 
@@ -1242,7 +1479,8 @@ struct RoomState: Sendable {
             EntityPose(
                 id: actor.id, kind: actor.kind, x: actor.x, y: actor.y, facing: actor.facing, anim: actor.anim, phase: actor.phase,
                 hp: actor.hp, maxHP: actor.maxHP, sprite: actor.sprite, elite: actor.elite,
-                rooted: actor.root > 0, stunned: actor.stun > 0, hostile: actor.team == 1, dx: actor.dx, dy: actor.dy
+                rooted: actor.root > 0, stunned: actor.stun > 0, hostile: actor.team == 1, dx: actor.dx, dy: actor.dy,
+                enraged: actor.enraged
             )
         }
     }
@@ -1251,8 +1489,23 @@ struct RoomState: Sendable {
         actors.compactMap { actor in
             guard actor.living, actor.windup > 0 else { return nil }
             let progress = 1 - Double(actor.windup) / Double(max(1, actor.windupTotal))
-            let radius = actor.kind == .brute ? setup.tuning.room.slamRadius : 0.45
-            return TelegraphSnapshot(id: actor.id, x: actor.aimX, y: actor.aimY, radius: radius, progress: progress, slam: actor.kind == .brute)
+            let radius: Double
+            let shape: String
+            let slam: Bool
+            if actor.kind == .guardian {
+                radius = max(0.6, actor.radius)
+                shape = actor.shape.isEmpty ? "circle" : actor.shape
+                slam = true
+            } else if actor.kind == .brute {
+                radius = setup.tuning.room.slamRadius
+                shape = "circle"
+                slam = true
+            } else {
+                radius = 0.45
+                shape = "circle"
+                slam = false
+            }
+            return TelegraphSnapshot(id: actor.id, x: actor.aimX, y: actor.aimY, radius: radius, progress: progress, slam: slam, shape: shape)
         }
     }
 

@@ -2,9 +2,16 @@
 // Plays the Hearthdelve cellar. A long-lived hearthsim play process holds the fight.
 
 import { spawn, spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { appendFileSync, existsSync, writeSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+// Cursor treats a buffered initialize reply as "still connecting".
+// writeSync matches the framing of the request and does not wait on the Node stream.
+let framing = 'lsp';
+function dbg(line) {
+  try { appendFileSync('/tmp/hearthdelve-mcp.log', `${new Date().toISOString()} ${line}\n`); } catch { /* ignore */ }
+}
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const pkg = path.join(root, 'Packages/HearthSimCLI');
@@ -12,7 +19,7 @@ const pkg = path.join(root, 'Packages/HearthSimCLI');
 const TOOLS = [
   {
     name: 'look',
-    description: 'The cellar fight right now: hero, souls, Flask, Ward, potion, and the nearest foes.',
+    description: 'The rift right now: floor, room, meter, hero, souls, Flask, Ward, potion, and the nearest foes.',
     inputSchema: { type: 'object', properties: {} },
   },
   {
@@ -111,7 +118,11 @@ function ask(op) {
 
 function write(msg) {
   const json = JSON.stringify(msg);
-  process.stdout.write(`Content-Length: ${Buffer.byteLength(json)}\r\n\r\n${json}`);
+  const payload = framing === 'ndjson'
+    ? `${json}\n`
+    : `Content-Length: ${Buffer.byteLength(json, 'utf8')}\r\n\r\n${json}`;
+  writeSync(1, payload);
+  dbg(`out ${framing} ${json.slice(0, 180)}`);
 }
 
 function extractJson(s, from = 0) {
@@ -150,12 +161,15 @@ function takeMessage(buf) {
       const len = Number(match[1]);
       const start = headerEnd + sepLen;
       if (buf.length < start + len) return null;
+      framing = 'lsp';
       return { msg: JSON.parse(buf.subarray(start, start + len).toString('utf8')), rest: buf.subarray(start + len) };
     }
   }
+  if (buf.length >= 8 && buf.subarray(0, 8).toString('utf8') === 'Content-') return null;
   const s = buf.toString('utf8');
   const extracted = extractJson(s);
   if (!extracted) return null;
+  framing = 'ndjson';
   return { msg: JSON.parse(extracted.json), rest: Buffer.from(s.slice(extracted.end)) };
 }
 
@@ -176,6 +190,7 @@ async function tool(name, args) {
 }
 
 async function handle(msg) {
+  dbg(`in ${msg.method} id=${msg.id}`);
   if (!msg.method || msg.id === undefined) return;
   if (msg.method === 'initialize') {
     const requested = typeof msg.params?.protocolVersion === 'string' ? msg.params.protocolVersion : '2025-06-18';
@@ -186,7 +201,7 @@ async function handle(msg) {
         protocolVersion: requested,
         capabilities: { tools: { listChanged: false } },
         serverInfo: { name: 'hearthdelve', version: '0.1.0' },
-        instructions: 'Headless Hearthdelve cellar, same room as the app. look, then act with flask, ward, or potion. step and play let the tactics fight. restart begins a new seed. This does not drive the phone screen.',
+        instructions: 'Headless Hearthdelve rift, same fight as the app. look, then act with flask, ward, or potion. step and play let the tactics fight. restart begins a new seed. This does not drive the phone screen.',
       },
     });
     return;
@@ -221,13 +236,21 @@ async function handle(msg) {
 let buf = Buffer.alloc(0);
 let chain = Promise.resolve();
 process.stdin.on('data', (chunk) => {
-  buf = Buffer.concat([buf, Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)]);
+  const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+  dbg(`stdin ${bytes.length} ${JSON.stringify(bytes.toString('utf8').slice(0, 180))}`);
+  buf = Buffer.concat([buf, bytes]);
   while (true) {
     let taken = null;
-    try { taken = takeMessage(buf); } catch { break; }
+    try { taken = takeMessage(buf); } catch (err) {
+      dbg(`parse ${err}`);
+      buf = Buffer.alloc(0);
+      break;
+    }
     if (!taken) break;
     buf = taken.rest;
-    chain = chain.then(() => handle(taken.msg));
+    chain = chain.then(() => handle(taken.msg)).catch((err) => dbg(`handle ${err}`));
   }
 });
+process.stdin.on('end', () => dbg('stdin end'));
 process.stdin.resume();
+dbg('listening');

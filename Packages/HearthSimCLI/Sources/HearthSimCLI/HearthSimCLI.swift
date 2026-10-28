@@ -53,7 +53,8 @@ enum HearthSimCLI {
         case "sweep":
             return try sweep(args)
         case "play":
-            return PlaySession(seed: UInt64(flag(args, "seed") ?? "") ?? 1).run()
+            let seed = UInt64(flag(args, "seed") ?? "") ?? 1
+            return PlaySession(seed: seed, setup: playSetup(args, seed: seed)).run()
         default:
             print("""
             hearthsim room --seed 1 --ticks 1200 [--taps 40:flask,300:ward,500:potion] [--record run.json] [--fixture]
@@ -119,7 +120,7 @@ enum HearthSimCLI {
             fputs("recording is sim v\(recording.simVersion); this build is v\(SimVersion.current)\n", stderr)
             return 1
         }
-        let setup: RoomSetup
+        var setup: RoomSetup
         if recording.contentVersion == "fixture" {
             setup = CellarFight.setup()
         } else {
@@ -128,7 +129,17 @@ enum HearthSimCLI {
                 fputs("warning: content \(catalog.version) differs from recorded \(recording.contentVersion)\n", stderr)
             }
             setup = try catalog.m0Setup()
+            if recording.riftMode != nil {
+                let guardian = catalog.guardians.first { $0.id == recording.guardianID } ?? GuardianCatalog.oldLintel()
+                setup.rift = RiftConfig(
+                    mode: recording.riftMode == RiftMode.deepRift.rawValue ? .deepRift : .delve,
+                    floors: recording.riftFloors ?? 1,
+                    guardian: recording.guardianID == nil ? nil : guardian,
+                    templates: catalog.mossyRooms()
+                )
+            }
         }
+        if let depth = recording.riftDepth { setup.depth = depth }
         let hash = recording.replay(setup: setup)
         let match = hash == recording.endHash
         print("replay seed \(recording.seed) ticks \(recording.endTick) inputs \(recording.inputs.count)")
@@ -197,6 +208,27 @@ enum HearthSimCLI {
             }
         }
         return 0
+    }
+
+    /// The same rift the app boots: Mossy rooms when the catalogs load, otherwise the built-in cellar.
+    private static func playSetup(_ args: [String], seed: UInt64) -> RoomSetup {
+        let mode: RiftMode = flag(args, "mode") == "deep" ? .deepRift : .delve
+        if let catalog = try? loadCatalog(args), var setup = try? catalog.m0Setup() {
+            let guardian = catalog.guardians.first { $0.id == "old_lintel" } ?? GuardianCatalog.oldLintel()
+            let equipped = [
+                LootItem.plain(id: "worn-melee", name: "Sword", slot: "melee", itemLevel: setup.depth + 10, definition: "sword"),
+                LootItem.plain(id: "worn-ranged", name: "Bow", slot: "ranged", itemLevel: setup.depth + 10, definition: "bow"),
+                LootItem.plain(id: "worn-relic", name: "Ember Flask", slot: "relic", itemLevel: setup.depth + 10, definition: "ember_flask"),
+            ]
+            setup.rift = RiftConfig(
+                mode: mode, floors: RiftFloors.count(for: seed), guardian: guardian, templates: catalog.mossyRooms(),
+                loot: catalog.lootTable(pity: 0, equipped: equipped, idPrefix: "\(seed)-0")
+            )
+            return setup
+        }
+        var setup = CellarFight.setup()
+        setup.rift = RiftConfig(mode: mode, floors: RiftFloors.count(for: seed), guardian: GuardianCatalog.oldLintel())
+        return setup
     }
 
     // MARK: Helpers

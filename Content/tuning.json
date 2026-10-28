@@ -4,13 +4,23 @@
     "p0": 10,
     "hp0": 15,
     "dmg0": 8,
-    "h0": 100,
+    "h0": 160,
     "critChance": 0.05,
     "critDamage": 0.5
   },
   "heroXP": {
     "base": 100,
     "growth": 1.08
+  },
+  "riftGold": 25,
+  "heroHPPerLevel": 8,
+  "smith": {
+    "commonDust": 5,
+    "rareShards": 2,
+    "uniqueEmbers": 1,
+    "raiseDust": 8,
+    "raiseGold": 10,
+    "raiseGrowth": 1.12
   },
   "paragonXP": {
     "base": 1000,
@@ -34,7 +44,7 @@
     "eliteHitPoints": 3,
     "bruteDamage": 2.2,
     "slamRadius": 1.2,
-    "potionHeal": 0.4,
+    "potionHeal": 0.55,
     "potionCooldown": 8,
     "potionCharges": 3,
     "potionRefillPerWave": 1,

@@ -39,6 +39,12 @@ final class ContentTests: XCTestCase {
         XCTAssertEqual(catalog.wardens.count, 2)
         XCTAssertEqual(catalog.wanderers.count, 12)
         XCTAssertEqual(catalog.buildings.count, 12)
+        let mossy = catalog.mossyRooms()
+        XCTAssertEqual(mossy.count, 8)
+        XCTAssertEqual(Set(mossy.map(\.tag)), ["entry", "corridor", "small", "large", "side", "arena", "stairs", "alcove"])
+        XCTAssertEqual(catalog.itemAffixes.count, 8)
+        XCTAssertEqual(ContentCatalog.m1UniqueIDs.count, 3)
+        XCTAssertTrue(catalog.uniques.contains { $0.id == "cinderfang" })
         XCTAssertEqual(catalog.bestiary().count, 77)
         for biome in catalog.biomes.segments[0].order {
             XCTAssertEqual(catalog.families.filter { $0.biome == biome }.count, 3, biome)

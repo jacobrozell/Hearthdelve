@@ -235,6 +235,16 @@ public struct XPCurveTuning: Codable, Sendable, Equatable {
     public var growth: Double
 }
 
+/// Salvage yields and the starting cost to raise an item one level. Growth is applied by repeated multiplication.
+public struct SmithTuning: Codable, Sendable, Equatable {
+    public var commonDust: Double
+    public var rareShards: Double
+    public var uniqueEmbers: Double
+    public var raiseDust: Double
+    public var raiseGold: Double
+    public var raiseGrowth: Double
+}
+
 public struct RoomTuning: Codable, Sendable, Equatable {
     public var heroTilesPerSecond: Double
     public var heroReactionSeconds: Double
@@ -266,6 +276,11 @@ public struct Tuning: Codable, Sendable, Equatable {
     public var combat: CombatTuning
     public var heroXP: XPCurveTuning
     public var paragonXP: XPCurveTuning
+    /// Flat gold added when a Rift ends. The spec leaves this number in tuning.
+    public var riftGold: Double
+    /// Max HP added on the next fight for each hero level after 1. Applied through `RoomSetup.bonusHP`.
+    public var heroHPPerLevel: Double
+    public var smith: SmithTuning
     public var soulRegenPerSecond: Double
     public var room: RoomTuning
 }

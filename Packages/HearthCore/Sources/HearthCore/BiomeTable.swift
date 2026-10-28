@@ -29,3 +29,18 @@ public struct BiomeTable: Codable, Sendable, Equatable {
         return BiomePlacement(biomeID: biomeID, echo: echo, tableVersion: version)
     }
 }
+
+public enum BiomeName {
+    public static func display(id: String, echo: Bool) -> String {
+        let base: String
+        switch id {
+        case "mossy_cellars": base = "Mossy Cellars"
+        case "fungal_hollows": base = "Fungal Hollows"
+        case "drowned_library": base = "Drowned Library"
+        case "ember_forges": base = "Ember Forges"
+        case "starless_vault": base = "Starless Vault"
+        default: base = id
+        }
+        return echo ? "Echo \(base)" : base
+    }
+}

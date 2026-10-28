@@ -16,7 +16,7 @@ todos:
     status: in_progress
   - id: m1-rift
     content: "M1: Mossy generation, Lantern, Guardian, loot, loadout, local save, session gate"
-    status: pending
+    status: in_progress
   - id: m2-loops
     content: "M2: Hearth scene, blacksmith, tactics, expeditions, Paragon, onboarding, loop gate"
     status: pending

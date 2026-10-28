@@ -1,0 +1,45 @@
+#!/bin/bash
+# idb 1.1.8 loads SimulatorKit from
+#   $DEVELOPER_DIR/Library/PrivateFrameworks/SimulatorKit.framework
+# and reads $DEVELOPER_DIR/../Info.plist to recognize Xcode.
+# Current Xcode keeps SimulatorKit in Contents/SharedFrameworks, and the
+# Xcode.app bundle cannot be modified. This wrapper points only idb_companion
+# at a lookalike bundle. xcrun and xcodebuild keep the real developer dir.
+set -euo pipefail
+
+REAL_APP="/Applications/Xcode.app"
+REAL_DEV="$REAL_APP/Contents/Developer"
+KIT="$REAL_APP/Contents/SharedFrameworks/SimulatorKit.framework"
+ROOT="${HOME}/Library/Application Support/hearthdelve-xcode/Xcode.app/Contents"
+DEV="$ROOT/Developer"
+COMPANION="/opt/homebrew/bin/idb_companion"
+
+if [[ ! -d "$KIT" || ! -f "$REAL_APP/Contents/Info.plist" ]]; then
+  echo "Xcode SimulatorKit layout not found under $REAL_APP" >&2
+  exit 1
+fi
+if [[ ! -x "$COMPANION" ]]; then
+  echo "idb_companion not found at $COMPANION" >&2
+  exit 1
+fi
+
+if [[ ! -d "$DEV/Library/PrivateFrameworks/SimulatorKit.framework" || ! -f "$ROOT/Info.plist" ]]; then
+  rm -rf "${HOME}/Library/Application Support/hearthdelve-xcode"
+  mkdir -p "$DEV/Library/PrivateFrameworks"
+  ln -s "$REAL_APP/Contents/Info.plist" "$ROOT/Info.plist"
+  ln -s "$REAL_APP/Contents/version.plist" "$ROOT/version.plist" 2>/dev/null || true
+  ln -s "$REAL_APP/Contents/SharedFrameworks" "$ROOT/SharedFrameworks"
+  for item in Makefiles Platforms Toolchains Tools usr; do
+    ln -s "$REAL_DEV/$item" "$DEV/$item"
+  done
+  for item in Frameworks Previews Xcode; do
+    ln -s "$REAL_DEV/Library/$item" "$DEV/Library/$item"
+  done
+  ln -s "$KIT" "$DEV/Library/PrivateFrameworks/SimulatorKit.framework"
+  if [[ -d /Library/Developer/PrivateFrameworks/CoreSimulator.framework ]]; then
+    ln -s /Library/Developer/PrivateFrameworks/CoreSimulator.framework "$DEV/Library/PrivateFrameworks/CoreSimulator.framework"
+  fi
+fi
+
+export DEVELOPER_DIR="$DEV"
+exec "$COMPANION" "$@"

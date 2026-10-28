@@ -68,6 +68,37 @@ public enum DifficultyBand: String, Sendable, Equatable {
         if ratio >= 0.7 { return .hard }
         return .deadly
     }
+
+    public var label: String {
+        switch self {
+        case .easy: "Easy"
+        case .fair: "Fair"
+        case .hard: "Hard"
+        case .deadly: "Deadly"
+        }
+    }
+}
+
+/// Loadout damage divided by a par weapon at this Depth, then compared with B(d).
+/// An empty weapon list is par, so a fresh hero forecasts at 1.
+public enum BuildForecast {
+    public static func multiplier(depth: Int, weapons: [LootItem], p0: Double) -> Double {
+        let par = LootScore.damage(itemLevel: depth + 10, affixes: [], p0: p0)
+        guard par > 0 else { return 1 }
+        let slots = weapons.filter { $0.slot == "melee" || $0.slot == "ranged" }
+        if slots.isEmpty { return 1 }
+        let dealt = slots.reduce(0.0) { total, item in
+            total + LootScore.damage(itemLevel: item.itemLevel, affixes: item.affixes, p0: p0)
+        }
+        let missing = Double(max(0, 2 - slots.count)) * par
+        return ((dealt + missing) / 2) / par
+    }
+
+    public static func band(depth: Int, weapons: [LootItem], p0: Double) -> DifficultyBand {
+        var curves = BalanceCurves(through: max(depth, 0))
+        let required = curves.requiredBuild.value(at: max(0, depth))
+        return DifficultyBand.band(buildMultiplier: multiplier(depth: depth, weapons: weapons, p0: p0), required: required)
+    }
 }
 
 public enum NumberFormat {

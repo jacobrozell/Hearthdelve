@@ -1,0 +1,10 @@
+[
+  {"id": "crit_chance", "name": "Crit Chance", "stat": "critChance", "min": 0.03, "max": 0.06, "slots": ["melee", "ranged"]},
+  {"id": "melee_damage", "name": "Melee Damage", "stat": "meleeDamage", "min": 0.04, "max": 0.08, "slots": ["melee"]},
+  {"id": "ranged_damage", "name": "Ranged Damage", "stat": "rangedDamage", "min": 0.04, "max": 0.08, "slots": ["ranged"]},
+  {"id": "attack_speed", "name": "Attack Speed", "stat": "attackSpeed", "min": 0.03, "max": 0.06, "slots": ["melee", "ranged"]},
+  {"id": "max_hp", "name": "Max HP", "stat": "maxHP", "min": 0.04, "max": 0.08, "slots": ["helm", "chest", "legs", "boots"]},
+  {"id": "armor", "name": "Armor", "stat": "armor", "min": 0.04, "max": 0.08, "slots": ["helm", "chest", "legs", "boots"]},
+  {"id": "relic_damage", "name": "Relic Damage", "stat": "relicDamage", "min": 0.04, "max": 0.08, "slots": ["relic"]},
+  {"id": "cooldown", "name": "Cooldown Reduction", "stat": "cooldownReduction", "min": 0.03, "max": 0.06, "slots": ["relic"]}
+]

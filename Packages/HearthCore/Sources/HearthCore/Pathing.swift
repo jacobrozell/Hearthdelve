@@ -96,6 +96,52 @@ enum RoomPath {
         return []
     }
 
+    /// True when the segment stays in open cells. A coarse sample can jump a corner the shot will hit; this walks every cell the segment enters.
+    static func clearLine(blocked: [Bool], width: Int, height: Int, from ax: Double, _ ay: Double, to bx: Double, _ by: Double) -> Bool {
+        func blockedCell(_ x: Int, _ y: Int) -> Bool {
+            if x < 0 || y < 0 || x >= width || y >= height { return true }
+            return blocked[y * width + x]
+        }
+        let dx = bx - ax
+        let dy = by - ay
+        var cx = Int(ax)
+        var cy = Int(ay)
+        let ex = Int(bx)
+        let ey = Int(by)
+        if cx == ex, cy == ey { return blockedCell(cx, cy) == false }
+        let stepX = dx > 0 ? 1 : (dx < 0 ? -1 : 0)
+        let stepY = dy > 0 ? 1 : (dy < 0 ? -1 : 0)
+        let tDeltaX = stepX == 0 ? Double.infinity : abs(1 / dx)
+        let tDeltaY = stepY == 0 ? Double.infinity : abs(1 / dy)
+        let nextX = stepX > 0 ? Double(cx + 1) : Double(cx)
+        let nextY = stepY > 0 ? Double(cy + 1) : Double(cy)
+        var tMaxX = stepX == 0 ? Double.infinity : (nextX - ax) / dx
+        var tMaxY = stepY == 0 ? Double.infinity : (nextY - ay) / dy
+        var steps = 0
+        while steps < width + height + 4 {
+            steps += 1
+            if tMaxX < tMaxY {
+                if tMaxX > 1 { return true }
+                cx += stepX
+                tMaxX += tDeltaX
+            } else if tMaxY < tMaxX {
+                if tMaxY > 1 { return true }
+                cy += stepY
+                tMaxY += tDeltaY
+            } else {
+                if tMaxX > 1 { return true }
+                if blockedCell(cx + stepX, cy) || blockedCell(cx, cy + stepY) { return false }
+                cx += stepX
+                cy += stepY
+                tMaxX += tDeltaX
+                tMaxY += tDeltaY
+            }
+            if blockedCell(cx, cy) { return false }
+            if cx == ex, cy == ey { return true }
+        }
+        return false
+    }
+
     private static func heuristic(_ x: Int, _ y: Int, _ gx: Int, _ gy: Int) -> Int {
         let dx = abs(x - gx)
         let dy = abs(y - gy)
