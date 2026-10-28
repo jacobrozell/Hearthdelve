@@ -40,7 +40,7 @@ Hearthdelve also answers several open questions in SAGA §8.9:
 
 **The Rift.** An uncharted Anula vein under the old penitentiary. Anula forms slowly in living stone (SAGA §8.10), so the deeper you go, the older and purer the crystal. That's the in-world reason for no ceiling: **Depth is grade.** Item level follows Depth, so better crystal makes better gear.
 
-**The Sinter.** AV-01 ends with Delver Seven cutting the Heart: "sudden, guilty, incomplete." *Incomplete* is the hook. What was left of the Sinter's binding has seeped into the vein for generations. That's why the deep stone echoes, and why Echo variants start at Depth 51. Nobody in the Hearth knows the name. The Codex finds it.
+**The Sinter.** AV-01 ends with Delver Seven cutting the Heart: "sudden, guilty, incomplete." *Incomplete* is the hook. What was left of the Sinter's binding has seeped into the vein for generations. That's why the deep stone echoes, and why Echo variants start at Depth 51. Nobody in the Hearth knows the name. The Codex finds it piece by piece, and the game says it once, at Depth 150 (see Decisions).
 
 ## Anchor law in the systems
 
@@ -136,7 +136,7 @@ If that's still confusing in playtests, rename the tier **Vessels**, after SAGA'
 
 ## Survivor's legend and the crown
 
-- **The Messenger** (the SoC protagonist) appears on broadsheets at the Relay Tower, in Lark's songs, and on Bestiary-style cards. Never as a fight. A late, optional cameo as a tired person passing through, who won't be a saint, matches III-M05. Decide this later.
+- **The Messenger** (the SoC protagonist) appears on broadsheets at the Relay Tower, in Lark's songs, and on Bestiary-style cards. Never in person and never as a fight (see Decisions).
 - **Kaefden IV** is on the shard. That's all.
 - **Vashirr** isn't in the game. The Red Litany quotes him wrongly, and Gorran says so.
 
@@ -192,10 +192,35 @@ Draft §7 line:
 - Rewrite the Codex and Wanderer flavor lines to match the Biomes and Wanderers tables.
 - Add anchor tags to Relics in `Content/`.
 
+## Decisions
+
+Settled 2026-10-28. Jacob handed these three calls over, so they follow the canon read above, not a preference.
+
+**1. The Sinter stays nameless until Depth 150, then gets named but never killed.**
+
+- Depth 1–50: no echo. The mountain's history arrives through biome flavor and Codex pages.
+- Depth 51–149: the echo has no name. Echo variants, Red Litany events, and Codex fragments (Malvek's sermons, Pell's ancestor's ledger, Bera's COPY) let a reader piece it together early.
+- Depth 150: a milestone Warden named for what Delver Seven didn't finish. The game says "the Sinter" once, there. The spec already makes 150 the last Depth that gates new mechanics, so the name lands where the content stops being new.
+- After 150 the echo is still there. Depth has no ceiling, so nothing below can be a final boss you finish.
+
+Why: AV-01 has the Sinter "heard, not named." AshVault won't ship, so Hearthdelve is the only game where players meet the Sinter, and naming it late makes it worth finding. SAGA's rule that deep vessels are not redeemed fits a thing that is only appetite.
+
+**2. The charter company is the first expansion, not launch.**
+
+Sketch for later:
+
+- An assayer comes up the mine road after the Relay Tower puts the Hearth's best Depth on the crystal line. The tower brings them; the player never caused it on purpose.
+- A charter offer: sell crystal to the company for more Anula and faster Hearth projects, and a company office goes up in the village.
+- Turning it down keeps the commons slower. Neither path locks content, and neither runs on a timer.
+- The Wanderers disagree, per SAGA's "no faction is a clean mouthpiece." Old Hob wants the money, Fern refuses, and Pell counts both ledgers.
+
+That makes the economy blade a choice the player makes, not scenery. The launch Hearth stays an honest commons.
+
+**3. The Messenger never appears in person.**
+
+Broadsheets, songs, and cards only. The survivor's legend pillar is about the myth, and III-M05 already tells the "living person refuses to be a saint" story in prose. A cameo risks contradicting whatever the SoC ending finally says. Revisit only if an expansion needs it, and even then never as a fight.
+
 ## Open questions
 
-1. Is the Sinter's leftover binding the long-tail villain, or should the deep echo stay nameless?
-2. Should the Hearth stay an honest commons, or should a charter company eventually notice its output and send an assayer up the mine road? That would be a natural first expansion.
-3. Hale: a thirteenth Wanderer, or a replacement for an existing one?
-4. Should the Messenger cameo happen at all?
-5. Is "Avasia: Hearthdelve" the store name, or does Avasia stay in the subtitle?
+1. Hale: a thirteenth Wanderer, or a replacement for an existing one?
+2. Is "Avasia: Hearthdelve" the store name, or does Avasia stay in the subtitle?
