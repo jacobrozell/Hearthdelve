@@ -1,6 +1,6 @@
 # Hearthdelve as Avasia Game 3
 
-Drafted 2026-10-28. A proposal, not canon. Nothing here is canon until it lands in the decision log in Avasia-iOS `docs/SAGA.md` §7.
+Complete 2026-10-28. Every call in this doc is made. It becomes saga canon when the §7 line in Next steps lands in Avasia-iOS `docs/SAGA.md`.
 
 Canon sources read for this draft, all in Avasia-iOS: `docs/SAGA.md` (§0 pillars, §3, §8), `docs/sequel/GAME3_OPENING.md`, `docs/LORE_ARCHIVE.md` §1.4, `docs/fiction/commodity/` (III-M01 to III-M09), and `docs/fiction/ASH_VAULT/` (AV-01 to AV-03). The AshVault repo's `ios/docs/avasia-integration-spec.md` covers the prison history.
 
@@ -36,7 +36,7 @@ Hearthdelve also answers several open questions in SAGA §8.9:
 
 **Where.** The NW mountain, west of KoN's Splitpath. That's the same mountain as KoN's pink cave (LORE_ARCHIVE §1.4), the Jal chain-mine (W-07), and the Kaefden penitentiary that became the Ash Vault (AV-01). Splitpath Station is the nearest town: a rail-head where Ring Road freight meets the crystal line (GAME3_OPENING). The mine road leaves it heading north. The Hearth sits at the end of that road.
 
-**The Hearth.** The spec already says the village grows "from a campfire and two tents." In Avasia terms, those tents belong to people who refused company scrip. Diaspora from Cataracta, a Warden off rotation, a clerk who kept the wrong ledger. They aren't saints. Like everyone else on the mountain, they live off what comes out of the ground (see the Writing rules section).
+**The Hearth.** The spec already says the village grows "from a campfire and two tents." In Avasia terms, those tents belong to people who refused company scrip. Diaspora from Cataracta, a Warden off rotation, a clerk who kept the wrong ledger. They aren't saints. Like everyone else on the mountain, they live off what comes out of the ground (see Decisions, 2).
 
 **The Rift.** An uncharted Anula vein under the old penitentiary. Anula forms slowly in living stone (SAGA §8.10), so the deeper you go, the older and purer the crystal. That's the in-world reason for no ceiling: **Depth is grade.** Item level follows Depth, so better crystal makes better gear.
 
@@ -61,12 +61,12 @@ Changes this implies:
 
 ## Currency and the dual spend
 
-| Today | Proposed | Notes |
+| Today | New | Notes |
 | --- | --- | --- |
 | Gold | **Anula**, counted in graded shards | Kaefden IV on the face. The UI may say "shards" |
 | Dust (Common salvage) | **Dust** | Ungraded Anula dust, the same stuff Tavi sells (III-M02). The name already fits |
-| Shards (Rare salvage) | **Facets** (working) | Renamed so "shards" can mean money |
-| Embers (Unique salvage) | **Echoes** (working) | Comes with the Codex signature. The echo is what the Reliquary binds |
+| Shards (Rare salvage) | **Facets** | Renamed so "shards" can mean money |
+| Embers (Unique salvage) | **Echoes** | Comes with the Codex signature. The echo is what the Reliquary binds |
 
 The dual spend (SAGA §8.10: "you are not choosing spells; you are choosing what not to buy") plays out as **Raise the gear or build the Hearth**. Both cost Anula. The Chandlery's ward-fuel upgrades are a third sink, and they really are magic paid for with money.
 
@@ -94,7 +94,7 @@ SAGA §0 lists three horrors for Game 3. Each needs a place to live where it doe
 | Blade | Where it shows up | How loud |
 | --- | --- | --- |
 | **Anula economy**: "You can't afford to be safe." | The village ledger, the market board news on the relay tower, Wanderer lines about Splitpath | Ambient, every session |
-| **Flesh garrisons**: "We keep you safe but never say what it costs us." | A licensed Warden living in the Hearth (see Wanderers), the Reliquary | One friendship thread, one system |
+| **Flesh garrisons**: "We keep you safe but never say what it costs us." | Hale, a licensed Warden living at the Inn (see Wanderers), and the Reliquary | One friendship thread, one system |
 | **Red Litany**: "Safety is a lie. Bleed and be free." | Deep Rift events and elite affixes past Depth 50; a Pit Chapel event; the optional fourth Reliquary slot | Rare, late, psychological first |
 
 SAGA's writing rules apply directly:
@@ -107,7 +107,7 @@ On a 16×16 Kenney sprite, "psychological first" is the only option anyway. Chan
 
 ## Wanderers
 
-There are twelve Wanderers, one per building. Most already fit Avasia. Each mapping below is a suggestion, and their existing intro lines stay.
+There are thirteen Wanderers: the twelve in `Content/wanderers.json`, one per building, plus Hale. The twelve keep their names and intro lines. This table gives each one an Avasia identity.
 
 | Wanderer | Building | Avasia identity |
 | --- | --- | --- |
@@ -124,15 +124,30 @@ There are twelve Wanderers, one per building. Most already fit Avasia. Each mapp
 | Bea | Lighthouse → **Relay Tower** | Runs a pirate crystal-line relay. Her tower shows your best Depth on the skyline and brings in the broadsheets |
 | Ivo | Glyphwright | A mage back from Nacastrum. "The marks on the walls aren't decoration" is about sky-anchor runes |
 
-**Add Hale.** Warden Hale from III-M03 ends a rotation and can't stop hearing the chant. Hale comes to the Hearth for quiet. Hale could be a thirteenth Wanderer, or take over a role that fits (Trophy Hall works). Hale's three-step thread is the flesh-garrison blade, told kindly.
+**Hale, the thirteenth.** Warden Hale from III-M03 ends a rotation and can't stop hearing the chant. Hale comes up the mine road for quiet and finds the chant is louder here.
+
+- **No building.** Hale lives at the Inn and runs no system, so no screen has to be built.
+- **Rescue.** A scripted Lost Wanderer event at Depth 51, the first Echo band. Hale went down after the sound.
+- **Thread.** Three steps, like the others, tied to Depth 75, 100 and 150. The last step comes after the Sinter is named, and Hale is the one who recognizes the chant. Gifts are decor and one Charm, per the spec's rule (never gear).
+- **Intro lines** (in the house voice): "Don't mind me. I'm listening for something that isn't there." / "The plate's off. The song isn't." / "You went deeper than the chant. I didn't think anyone could."
+
+Hale is the flesh-garrison blade told kindly: a licensed Warden who is not a cultist and is not fine.
 
 ## Milestone wardens: a naming collision
 
 Hearthdelve calls its every-50-Depth bosses **Wardens** (Keeper of the Well at 50, The Lampless One at 100). In the Commodity Era, "Warden" means a licensed Flesh-Warden, and canon says those are sympathetic.
 
-Recommendation: keep the word and pin its meaning to **the old penitentiary's wardens**. AshVault's roster already did this: Turnkey Hess, Pink Bloom, the Echo Sergeant, Malvek's Shade, the Sinter. They're dead men bound into the stone. They aren't Commodity Era Wardens, and the Codex says so in one line. The Keeper of the Well and the Lampless One already fit, as a turnkey and as a ward-lighter. Past Depth 100, the AshVault roster supplies the next milestones, and the Sinter's residue is the long tail.
+The call: keep the word and pin its meaning to **the old penitentiary's wardens**. AshVault's roster already did this: Turnkey Hess, Pink Bloom, the Echo Sergeant, Malvek's Shade, the Sinter. They're dead men bound into the stone. They aren't Commodity Era Wardens, and the Codex says so in one line. The Keeper of the Well and the Lampless One already fit, as a turnkey and as a ward-lighter.
 
-If that's still confusing in playtests, rename the tier **Vessels**, after SAGA's "deep vessels."
+| Depth | Milestone Warden |
+| --- | --- |
+| 50 | Keeper of the Well (built) |
+| 100 | The Lampless One (built) |
+| 150 | The Sinter's remnant, named once (Decisions, 1) |
+| 200, 250, 300, 350 | Turnkey Hess, Pink Bloom, the Echo Sergeant, Malvek's Shade: the men it ate, still bound |
+| 400+ | Echo variants of the roster, one new phase each |
+
+If the word still confuses playtesters, rename the tier **Vessels**, after SAGA's "deep vessels."
 
 ## Survivor's legend and the crown
 
@@ -152,7 +167,7 @@ The opening card replaces III-M01's rent scene with its aftermath: *You walked o
 
 ## Where Hearthdelve and the bible disagree
 
-| Tension | Bible says | Hearthdelve says | Proposed call |
+| Tension | Bible says | Hearthdelve says | Call |
 | --- | --- | --- | --- |
 | Tone | Body horror, bitter realism | Creepy-cute, no gore | Cozy above, wrong below, unjust offscreen. Horror stays in text and sound. Deep bands get darker, not bloodier |
 | Pressure | Rent due in three days | No guilt timers | Rent is backstory. The pressure is the dual spend, never a clock |
@@ -172,12 +187,12 @@ Keep them light and one way. Never "play X to progress in Y."
 - Reaching certain Depths in Hearthdelve unlocks the matching AV and III-M stories in the Avasia-iOS anthology.
 - Echo Seasons (post-launch) can bring back EchoShafts' Flesh-Warden as a seasonal hero with a flesh-anchor rule.
 
-## If this is a yes
+## Next steps
 
 **Avasia-iOS**
 
 - Add a decision-log entry to SAGA §7 (draft below).
-- Update §3 and §5: Game 3 is *Avasia: Hearthdelve*, and the format line becomes the amended one from the Tensions table.
+- Update §3 and §5: Game 3 is *Avasia: Hearthdelve*, the PC is a former Splitpath courier, and the format line becomes the amended one from the Tensions table.
 - Add a note at the top of GAME3_OPENING.md: Splitpath Station is the hero's backstory and the nearest town; the playable opening is the Hearth.
 - Mark the §8.9 questions this doc answers.
 
@@ -191,14 +206,16 @@ Draft §7 line:
 - Content renames: gold → Anula, Shards → Facets, Embers → Echoes, Souls → Charge, Lighthouse → Relay Tower. Most of the work is display strings. Save keys can wait for a migration.
 - Rewrite the Codex and Wanderer flavor lines to match the Biomes and Wanderers tables.
 - Add anchor tags to Relics in `Content/`.
+- Add Hale to `Content/wanderers.json`. The entry has no building, so the schema needs `building` to be optional.
+- Add the Depth 150+ Wardens to `Content/wardens.json` when M3 content work reaches them.
 
 ## Decisions
 
-Settled 2026-10-28. Jacob handed these three calls over, so they follow the canon read above, not a preference.
+Settled 2026-10-28. Jacob handed these calls over, so they follow the canon read above, not a preference.
 
 **1. The Sinter stays nameless until Depth 150, then gets named but never killed.**
 
-- Depth 1–50: no echo. The mountain's history arrives through biome flavor and Codex pages.
+- Depth 1–50: the echo is only a sound. A chant through the well on the first walk home, nothing in combat. The mountain's history arrives through biome flavor and Codex pages.
 - Depth 51–149: the echo has no name. Echo variants, Red Litany events, and Codex fragments (Malvek's sermons, Pell's ancestor's ledger, Bera's COPY) let a reader piece it together early.
 - Depth 150: a milestone Warden named for what Delver Seven didn't finish. The game says "the Sinter" once, there. The spec already makes 150 the last Depth that gates new mechanics, so the name lands where the content stops being new.
 - After 150 the echo is still there. Depth has no ceiling, so nothing below can be a final boss you finish.
@@ -220,7 +237,14 @@ That makes the economy blade a choice the player makes, not scenery. The launch 
 
 Broadsheets, songs, and cards only. The survivor's legend pillar is about the myth, and III-M05 already tells the "living person refuses to be a saint" story in prose. A cameo risks contradicting whatever the SoC ending finally says. Revisit only if an expansion needs it, and even then never as a fight.
 
-## Open questions
+**4. Hale is a thirteenth Wanderer.**
 
-1. Hale: a thirteenth Wanderer, or a replacement for an existing one?
-2. Is "Avasia: Hearthdelve" the store name, or does Avasia stay in the subtitle?
+Hale lives at the Inn with no building of their own, and is rescued at Depth 51. Details are in the Wanderers section. None of the twelve is replaced, because each one already runs a building.
+
+**5. The store name is Hearthdelve. The saga title is *Avasia: Hearthdelve*.**
+
+- **App Store name:** Hearthdelve. Nobody searches for "Avasia" yet, and the unique word is the hook.
+- **App Store subtitle:** sells the genre, not the saga. For example, "Endless loot. A village to come home to."
+- **Title screen, saga docs, and Avasia-iOS cross-promo:** *Avasia: Hearthdelve*, matching *Avasia: King of Nacastrum* and *Avasia: Blade of Courage*.
+
+If Avasia ever builds a store audience, the name can move to "Avasia: Hearthdelve" in an update without changing anything else.
