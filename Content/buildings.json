@@ -9,6 +9,6 @@
   {"id": "reliquary", "name": "Reliquary", "wanderer": "relic_keeper", "unlock": 15, "sprite": "wanderer.relic_keeper"},
   {"id": "garden", "name": "Garden", "wanderer": "gardener", "unlock": 20, "sprite": "wanderer.gardener"},
   {"id": "trophy_hall", "name": "Trophy Hall", "wanderer": "trophy_keeper", "unlock": 25, "sprite": "wanderer.trophy_keeper"},
-  {"id": "lighthouse", "name": "Lighthouse", "wanderer": "lighthouse_keeper", "unlock": 40, "sprite": "wanderer.lighthouse_keeper"},
+  {"id": "lighthouse", "name": "Relay Tower", "wanderer": "lighthouse_keeper", "unlock": 40, "sprite": "wanderer.lighthouse_keeper"},
   {"id": "glyphwright", "name": "Glyphwright", "wanderer": "glyphwright", "unlock": 50, "sprite": "wanderer.glyphwright"}
 ]

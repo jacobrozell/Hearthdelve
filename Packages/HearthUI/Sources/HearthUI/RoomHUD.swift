@@ -49,13 +49,17 @@ public struct RoomHUDState: Equatable, Sendable {
     public var meter: Double = 0
     public var depth = 1
     public var floor = 1
+    public var floorCount = 1
     public var lanternOn = false
     public var lantern: Double = 0
     public var enraged = false
     public var lootLines: [LootLine] = []
+    public var lootEmpty = "None"
+    public var lootNote: String?
     public var depthDelta: Int?
     public var settled = false
     public var resultMessage: String?
+    public var reward: String?
     public var homeTitle = "New run"
     public var leaveTitle = "New run"
 
@@ -88,20 +92,38 @@ public struct RoomActions {
 public struct LootLine: Equatable, Sendable, Identifiable {
     public var id: String
     public var text: String
+    public var slot: String
+    public var slotName: String
     public var damageArrow: Int
     public var toughnessArrow: Int
     public var equipped: Bool
+    public var details: [String]
 
-    public init(id: String, text: String, damageArrow: Int, toughnessArrow: Int, equipped: Bool) {
+    public init(id: String, text: String, slot: String, slotName: String, damageArrow: Int, toughnessArrow: Int, equipped: Bool, details: [String]) {
         self.id = id
         self.text = text
+        self.slot = slot
+        self.slotName = slotName
         self.damageArrow = damageArrow
         self.toughnessArrow = toughnessArrow
         self.equipped = equipped
+        self.details = details
     }
 }
 
-/// The Rift HUD, bottom to top: thumb buttons, then HP and Souls. Nothing tappable sits at the top of the screen.
+public struct GearSlotLine: Equatable, Sendable, Identifiable {
+    public var id: String
+    public var name: String
+    public var wearing: String
+
+    public init(id: String, name: String, wearing: String) {
+        self.id = id
+        self.name = name
+        self.wearing = wearing
+    }
+}
+
+/// The Rift HUD, bottom to top: thumb buttons, then HP and Charge. Nothing tappable sits at the top of the screen.
 public struct RoomHUD: View {
     public var state: RoomHUDState
     public var actions: RoomActions
@@ -126,13 +148,15 @@ public struct RoomHUD: View {
                 DownOverlay(
                     newRun: actions.newRun, save: actions.saveRecording, equip: actions.equip, note: note,
                     message: state.resultMessage ?? "You wake by the hearth. Everything you found came home with you.",
-                    loot: state.lootLines, depthDelta: state.depthDelta, homeTitle: state.homeTitle
+                    reward: state.reward,
+                    loot: state.lootLines, depthDelta: state.depthDelta, emptyTitle: state.lootEmpty, lootNote: state.lootNote, homeTitle: state.homeTitle
                 )
             } else if state.settled {
                 ClearOverlay(
                     newRun: actions.newRun, save: actions.saveRecording, equip: actions.equip, note: note,
                     message: state.resultMessage ?? "The Guardian falls.",
-                    loot: state.lootLines, depthDelta: state.depthDelta, homeTitle: state.homeTitle
+                    reward: state.reward,
+                    loot: state.lootLines, depthDelta: state.depthDelta, emptyTitle: state.lootEmpty, lootNote: state.lootNote, homeTitle: state.homeTitle
                 )
             } else if state.paused {
                 PauseOverlay(resume: actions.pause, newRun: actions.newRun, save: actions.saveRecording, note: note, leaveTitle: state.leaveTitle)
@@ -153,11 +177,12 @@ public struct RoomHUD: View {
                 Text("Depth \(state.depth)")
                     .accessibilityLabel("Depth")
                     .accessibilityValue("\(state.depth)")
-                Text("Floor \(state.floor)")
+                Text("Floor \(state.floor)/\(max(1, state.floorCount))")
                     .accessibilityLabel("Floor")
-                    .accessibilityValue("\(state.floor)")
+                    .accessibilityValue("\(state.floor) of \(max(1, state.floorCount))")
                 Spacer(minLength: 0)
                 if state.lanternOn {
+                    Text("Lantern")
                     LanternArc(fraction: state.lantern)
                 }
             }
@@ -187,6 +212,7 @@ public struct RoomHUD: View {
                     .background(Capsule().fill(HearthPalette.ink.opacity(0.7)))
                     .transition(.opacity)
                     .allowsHitTesting(false)
+                    .accessibilityLabel(tactic)
             }
             HStack(alignment: .lastTextBaseline) {
                 Text("Wave \(state.wave)")
@@ -198,7 +224,7 @@ public struct RoomHUD: View {
             .allowsHitTesting(false)
             HStack(spacing: 8) {
                 Meter(title: "HP", value: fraction(state.hp, state.maxHP), text: "\(Int(state.hp.rounded()))", tint: HearthPalette.grass, shield: fraction(state.shield, state.maxHP))
-                Meter(title: "Souls", value: fraction(state.souls, state.soulCap), text: "\(Int(state.souls.rounded()))", tint: HearthPalette.amber, shield: 0)
+                Meter(title: "Charge", value: fraction(state.souls, state.soulCap), text: "\(Int(state.souls.rounded()))", tint: HearthPalette.amber, shield: 0)
             }
             .allowsHitTesting(false)
             HStack(spacing: 10) {
@@ -357,7 +383,7 @@ private struct RiftMeterBar: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             HStack {
-                Text("Meter")
+                Text("Guardian")
                 Spacer()
                 Text("\(Int((value * 100).rounded()))%")
             }
@@ -373,7 +399,7 @@ private struct RiftMeterBar: View {
             .frame(height: 8)
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Rift meter")
+        .accessibilityLabel("Guardian")
         .accessibilityValue("\(Int((value * 100).rounded())) percent")
     }
 }
@@ -381,11 +407,13 @@ private struct RiftMeterBar: View {
 private struct LootList: View {
     var lines: [LootLine]
     var depthDelta: Int?
+    var emptyTitle: String
+    var note: String?
     var equip: (String) -> Void
 
     var body: some View {
         VStack(spacing: 4) {
-            if let depthDelta {
+            if let depthDelta, depthDelta != 0 {
                 Text("Depth +\(depthDelta)")
                     .font(HearthFont.pixel(18))
                     .foregroundStyle(HearthPalette.amber)
@@ -396,30 +424,41 @@ private struct LootList: View {
                 .font(HearthFont.pixel(16))
                 .foregroundStyle(HearthPalette.parchment.opacity(0.8))
                 .accessibilityLabel("Loot")
-            if lines.isEmpty {
-                Text("None")
+            if let note {
+                Text(note)
                     .font(HearthFont.pixel(16))
                     .foregroundStyle(HearthPalette.parchment)
-            } else {
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            if lines.isEmpty && note == nil {
+                Text(emptyTitle)
+                    .font(HearthFont.pixel(16))
+                    .foregroundStyle(HearthPalette.parchment)
+            } else if lines.isEmpty == false {
                 ScrollView {
-                    VStack(spacing: 6) {
-                        ForEach(lines) { line in
-                            HStack(spacing: 8) {
-                                Text(line.text)
-                                    .font(HearthFont.pixel(16))
-                                    .foregroundStyle(HearthPalette.parchment)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                ScoreMark(arrow: line.damageArrow, name: "damage")
-                                ScoreMark(arrow: line.toughnessArrow, name: "toughness")
-                                Button(line.equipped ? "Equipped" : "Equip") { equip(line.id) }
-                                    .font(HearthFont.pixel(16))
-                                    .foregroundStyle(HearthPalette.ink)
-                                    .frame(minWidth: 72, minHeight: 44)
-                                    .background(RoundedRectangle(cornerRadius: 3).fill(line.equipped ? HearthPalette.parchment.opacity(0.4) : HearthPalette.amber))
-                                    .buttonStyle(.plain)
-                                    .disabled(line.equipped)
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(SlotGroups.loot(lines), id: \.name) { group in
+                            Text(group.name)
+                                .font(HearthFont.pixel(14))
+                                .foregroundStyle(HearthPalette.amber)
+                                .accessibilityAddTraits(.isHeader)
+                            ForEach(group.lines) { line in
+                                HStack(alignment: .top, spacing: 8) {
+                                    ItemFacts(title: line.text, details: line.details)
+                                    if line.equipped == false {
+                                        ScoreMark(arrow: line.damageArrow, name: "damage")
+                                        ScoreMark(arrow: line.toughnessArrow, name: "toughness")
+                                    }
+                                    Button(line.equipped ? "Equipped" : "Equip") { equip(line.id) }
+                                        .font(HearthFont.pixel(16))
+                                        .foregroundStyle(HearthPalette.ink)
+                                        .frame(minWidth: 72, minHeight: 44)
+                                        .background(RoundedRectangle(cornerRadius: 3).fill(line.equipped ? HearthPalette.parchment.opacity(0.4) : HearthPalette.amber))
+                                        .buttonStyle(.plain)
+                                        .disabled(line.equipped)
+                                        .accessibilityLabel(line.equipped ? "Equipped \(group.name)" : "Equip \(line.text) in \(group.name)")
+                                }
                             }
-                            .accessibilityElement(children: .combine)
                         }
                     }
                 }
@@ -465,8 +504,11 @@ private struct DownOverlay: View {
     var equip: (String) -> Void
     var note: String?
     var message: String
+    var reward: String?
     var loot: [LootLine]
     var depthDelta: Int?
+    var emptyTitle: String
+    var lootNote: String?
     var homeTitle: String
 
     var body: some View {
@@ -477,7 +519,13 @@ private struct DownOverlay: View {
                     .font(HearthFont.pixel(20))
                     .multilineTextAlignment(.center)
                     .foregroundStyle(HearthPalette.parchment)
-                LootList(lines: loot, depthDelta: depthDelta, equip: equip)
+                if let reward {
+                    Text(reward)
+                        .font(HearthFont.pixel(18))
+                        .foregroundStyle(HearthPalette.amber)
+                        .accessibilityLabel(reward)
+                }
+                LootList(lines: loot, depthDelta: depthDelta, emptyTitle: emptyTitle, note: lootNote, equip: equip)
                 PanelButton(title: homeTitle, action: newRun)
                 Button("Save this run", action: save)
                     .font(HearthFont.pixel(16))
@@ -496,8 +544,11 @@ private struct ClearOverlay: View {
     var equip: (String) -> Void
     var note: String?
     var message: String
+    var reward: String?
     var loot: [LootLine]
     var depthDelta: Int?
+    var emptyTitle: String
+    var lootNote: String?
     var homeTitle: String
 
     var body: some View {
@@ -508,7 +559,13 @@ private struct ClearOverlay: View {
                     .font(HearthFont.pixel(22))
                     .multilineTextAlignment(.center)
                     .foregroundStyle(HearthPalette.amber)
-                LootList(lines: loot, depthDelta: depthDelta, equip: equip)
+                if let reward {
+                    Text(reward)
+                        .font(HearthFont.pixel(18))
+                        .foregroundStyle(HearthPalette.parchment)
+                        .accessibilityLabel(reward)
+                }
+                LootList(lines: loot, depthDelta: depthDelta, emptyTitle: emptyTitle, note: lootNote, equip: equip)
                 PanelButton(title: homeTitle, action: newRun)
                 Button("Save this run", action: save)
                     .font(HearthFont.pixel(16))

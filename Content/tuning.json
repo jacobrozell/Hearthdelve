@@ -20,7 +20,11 @@
     "uniqueEmbers": 1,
     "raiseDust": 8,
     "raiseGold": 10,
-    "raiseGrowth": 1.12
+    "raiseGrowth": 1.12,
+    "rerollRareShards": 4,
+    "rerollUniqueEmbers": 2,
+    "craftRareShards": 8,
+    "transmuteEmbers": 12
   },
   "paragonXP": {
     "base": 1000,

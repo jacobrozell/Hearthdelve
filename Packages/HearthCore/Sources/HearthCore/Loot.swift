@@ -40,6 +40,29 @@ public struct LootAffixRoll: Sendable, Equatable {
     }
 }
 
+/// How a rolled affix reads on a piece. 0.0644 is "6.4%".
+public enum AffixFormat {
+    public static func percent(_ value: Double) -> String {
+        let tenths = (value * 1_000).rounded() / 10
+        if abs(tenths - tenths.rounded()) < 0.001 {
+            return "\(Int(tenths.rounded()))%"
+        }
+        return String(format: "%.1f%%", tenths)
+    }
+
+    public static func line(name: String, value: Double) -> String {
+        "\(name) +\(percent(value))"
+    }
+
+    public static func perSecond(_ value: Double) -> String {
+        let tenths = (value * 10).rounded() / 10
+        if abs(tenths - tenths.rounded()) < 0.001 {
+            return "\(Int(tenths.rounded()))/s"
+        }
+        return String(format: "%.1f/s", tenths)
+    }
+}
+
 public struct LootBase: Sendable, Equatable {
     public var id: String
     public var name: String
@@ -145,6 +168,56 @@ public struct LootRoll: Sendable, Equatable {
     }
 }
 
+/// The seven pieces a level-1 hero can wear.
+public enum GearSlots {
+    public static let order = ["melee", "ranged", "relic", "helm", "chest", "legs", "boots"]
+
+    public static func name(_ slot: String) -> String {
+        switch slot {
+        case "melee": "Melee"
+        case "ranged": "Ranged"
+        case "relic": "Relic"
+        case "helm": "Helm"
+        case "chest": "Chest"
+        case "legs": "Legs"
+        case "boots": "Boots"
+        default: slot.prefix(1).uppercased() + slot.dropFirst()
+        }
+    }
+
+    public static func isArmor(_ slot: String) -> Bool {
+        slot == "helm" || slot == "chest" || slot == "legs" || slot == "boots"
+    }
+}
+
+/// Fills an empty slot with the strongest piece that fits. A slot that already has gear is left alone.
+public enum GearEquip {
+    public static func fill(slot: String, wornID: String?, choices: [LootItem], p0: Double, h0: Double) -> String? {
+        guard wornID == nil else { return nil }
+        let fits = choices.filter { $0.slot == slot }
+        return fits.max { worse($0, than: $1, slot: slot, p0: p0, h0: h0) }?.id
+    }
+
+    private static func worse(_ lhs: LootItem, than rhs: LootItem, slot: String, p0: Double, h0: Double) -> Bool {
+        let left = score(lhs, slot: slot, p0: p0, h0: h0)
+        let right = score(rhs, slot: slot, p0: p0, h0: h0)
+        if abs(left - right) > 0.000_001 { return left < right }
+        if lhs.itemLevel != rhs.itemLevel { return lhs.itemLevel < rhs.itemLevel }
+        let ranks = ["common": 0, "rare": 1, "unique": 2]
+        let leftRank = ranks[lhs.rarity] ?? 0
+        let rightRank = ranks[rhs.rarity] ?? 0
+        if leftRank != rightRank { return leftRank < rightRank }
+        return lhs.id > rhs.id
+    }
+
+    private static func score(_ item: LootItem, slot: String, p0: Double, h0: Double) -> Double {
+        if GearSlots.isArmor(slot) {
+            return LootScore.toughness(itemLevel: item.itemLevel, affixes: item.affixes, h0: h0)
+        }
+        return LootScore.damage(itemLevel: item.itemLevel, affixes: item.affixes, p0: p0)
+    }
+}
+
 public enum LootScore {
     private static let offense: Set<String> = ["meleeDamage", "rangedDamage", "relicDamage", "critChance", "attackSpeed"]
     private static let defense: Set<String> = ["maxHP", "armor"]
@@ -165,6 +238,108 @@ public enum LootScore {
         if new > old + 0.000_001 { return 1 }
         if new < old - 0.000_001 { return -1 }
         return 0
+    }
+
+    /// Marks against the piece actually worn in this slot. An empty slot is level, not an upgrade over a phantom.
+    public static func marks(for item: LootItem, worn: LootItem?, p0: Double, h0: Double) -> (Int, Int) {
+        guard let worn, worn.id != item.id else { return (0, 0) }
+        return (
+            arrow(new: damage(itemLevel: item.itemLevel, affixes: item.affixes, p0: p0), old: damage(itemLevel: worn.itemLevel, affixes: worn.affixes, p0: p0)),
+            arrow(new: toughness(itemLevel: item.itemLevel, affixes: item.affixes, h0: h0), old: toughness(itemLevel: worn.itemLevel, affixes: worn.affixes, h0: h0))
+        )
+    }
+}
+
+/// Armor rolls become bonus hit points and an armor rating. Weapon power stays on `BuildForecast`.
+public enum WornArmor {
+    public static func contribution(pieces: [(itemLevel: Int, affixes: [LootAffixRoll])], h0: Double) -> (bonusHP: Double, armor: Double) {
+        var curves = BalanceCurves()
+        var bonus = 0.0
+        var rating = 0.0
+        for piece in pieces {
+            let hp = curves.heroHitPoints(h0: h0, itemLevel: piece.itemLevel)
+            bonus += hp * piece.affixes.filter { $0.stat == "maxHP" }.reduce(0) { $0 + $1.value }
+            rating += hp * piece.affixes.filter { $0.stat == "armor" }.reduce(0) { $0 + $1.value }
+        }
+        return (bonus, rating)
+    }
+}
+
+public struct SheetLine: Equatable, Sendable, Identifiable {
+    public var id: String
+    public var name: String
+    public var value: String
+
+    public init(id: String, name: String, value: String) {
+        self.id = id
+        self.name = name
+        self.value = value
+    }
+}
+
+/// The numbers the next fight uses from the worn loadout.
+/// Weapon affixes raise that weapon's power. Crit on a piece does the same; the crit roll stays the base, plus a melee innate.
+public enum HeroSheet {
+    public static func lines(
+        melee: LootItem?, ranged: LootItem?, relicAffixes: [LootAffixRoll],
+        armor: [(itemLevel: Int, affixes: [LootAffixRoll])],
+        level: Int, perLevelHP: Double, p0: Double, h0: Double,
+        baseCrit: Double, innateCrit: Double, meleeRate: Double?, rangedRate: Double?
+    ) -> [SheetLine] {
+        var rows = [
+            SheetLine(id: "melee", name: "Melee", value: power(melee, p0: p0)),
+            SheetLine(id: "ranged", name: "Ranged", value: power(ranged, p0: p0)),
+        ]
+        let worn = WornArmor.contribution(pieces: armor, h0: h0)
+        let bonus = worn.bonusHP + HeroProgress.bonusHP(level: level, perLevel: perLevelHP)
+        rows.append(SheetLine(id: "hp", name: "Bonus HP", value: NumberFormat.short(bonus)))
+        rows.append(SheetLine(id: "armor", name: "Armor", value: NumberFormat.short(worn.armor)))
+        rows.append(SheetLine(id: "crit", name: "Crit", value: AffixFormat.percent(baseCrit)))
+        if innateCrit > 0.000_001 {
+            rows.append(SheetLine(id: "meleeCrit", name: "Melee crit", value: AffixFormat.percent(baseCrit + innateCrit)))
+        }
+        if let meleeRate {
+            rows.append(SheetLine(id: "meleeRate", name: "Melee speed", value: AffixFormat.perSecond(meleeRate)))
+        }
+        if let rangedRate {
+            rows.append(SheetLine(id: "rangedRate", name: "Ranged speed", value: AffixFormat.perSecond(rangedRate)))
+        }
+        let relicDamage = relicAffixes.reduce(0.0) { $1.stat == "relicDamage" ? $0 + $1.value : $0 }
+        let haste = relicAffixes.reduce(0.0) { $1.stat == "cooldownReduction" ? $0 + $1.value : $0 }
+        if relicDamage > 0.000_001 {
+            rows.append(SheetLine(id: "relic", name: "Relic damage", value: "+\(AffixFormat.percent(relicDamage))"))
+        }
+        if haste > 0.000_001 {
+            rows.append(SheetLine(id: "cooldown", name: "Cooldown", value: "-\(AffixFormat.percent(haste))"))
+        }
+        return rows
+    }
+
+    private static func power(_ item: LootItem?, p0: Double) -> String {
+        guard let item else { return "—" }
+        return NumberFormat.short(LootScore.damage(itemLevel: item.itemLevel, affixes: item.affixes, p0: p0))
+    }
+}
+
+public extension RelicDefinition {
+    /// Scales damage opcodes by `relicDamage` and shortens cooldown by `cooldownReduction`. Other stats are left alone.
+    func tuned(by affixes: [LootAffixRoll]) -> RelicDefinition {
+        var relic = self
+        let damage = affixes.reduce(0.0) { $1.stat == "relicDamage" ? $0 + $1.value : $0 }
+        let haste = affixes.reduce(0.0) { $1.stat == "cooldownReduction" ? $0 + $1.value : $0 }
+        if damage != 0 {
+            relic.opcodes = relic.opcodes.map { spec in
+                var spec = spec
+                if let coefficient = spec.coefficient, spec.op == "damage" || spec.op == "zone" {
+                    spec.coefficient = coefficient * (1 + damage)
+                }
+                return spec
+            }
+        }
+        if haste != 0 {
+            relic.cooldown *= max(0, 1 - haste)
+        }
+        return relic
     }
 }
 
@@ -231,6 +406,15 @@ public enum LootRoller {
         return items.filter { kept.contains($0.id) }
     }
 
+    /// Pity after the items that fit. Dropped rolls do not move the streak.
+    public static func pity(starting: Int, kept: [LootItem]) -> Int {
+        var pity = starting
+        for item in kept {
+            _ = applyPity(rolled: item.rarity, pity: &pity)
+        }
+        return pity
+    }
+
     private enum DropSource {
         case normal
         case elite
@@ -266,11 +450,7 @@ public enum LootRoller {
         let name = unique?.name ?? base?.name ?? "Gear"
         let definition = unique?.id ?? base?.id ?? name
         let worn = table.equipped.first { $0.slot == slot }
-        let damage = LootScore.damage(itemLevel: itemLevel, affixes: affixes, p0: p0)
-        let toughness = LootScore.toughness(itemLevel: itemLevel, affixes: affixes, h0: h0)
-        let oldDamage = worn.map { LootScore.damage(itemLevel: $0.itemLevel, affixes: $0.affixes, p0: p0) } ?? 0
-        let oldToughness = worn.map { LootScore.toughness(itemLevel: $0.itemLevel, affixes: $0.affixes, h0: h0) } ?? 0
-        return LootItem(
+        let rolled = LootItem(
             id: "\(table.idPrefix)-\(index)",
             definition: definition,
             name: name,
@@ -279,8 +459,13 @@ public enum LootRoller {
             rarity: rarity,
             affixes: affixes,
             signature: unique?.id,
-            damageArrow: LootScore.arrow(new: damage, old: oldDamage),
-            toughnessArrow: LootScore.arrow(new: toughness, old: oldToughness)
+            damageArrow: 0,
+            toughnessArrow: 0
+        )
+        let marks = LootScore.marks(for: rolled, worn: worn, p0: p0, h0: h0)
+        return LootItem(
+            id: rolled.id, definition: definition, name: name, slot: slot, itemLevel: itemLevel, rarity: rarity,
+            affixes: affixes, signature: unique?.id, damageArrow: marks.0, toughnessArrow: marks.1
         )
     }
 

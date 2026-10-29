@@ -4,11 +4,13 @@ Drafted 2026-10-28. Updated the same day after the three slices landed on the si
 
 ## Landed
 
-The home is a Kenney Tiny Town hamlet, about two phone screens wide. A finger pans it. The well opens the existing gate. Coming back from a rift centers the camera on the well. The Apothecary, Library, and Map Room name themselves and the Depth that opens them (2, 3, and 5) and do not open a system. The Blacksmith opens a screen that closes.
+The home is a Kenney Tiny Town hamlet, about two phone screens wide. A finger pans it. The well opens the existing gate. Coming back from a rift centers the camera on the well. The Apothecary, Library, and Map Room name themselves and the Depth that opens them (2, 3, and 5) and do not open a system. The Blacksmith opens salvage and raise.
 
-A finished rift, clear or death, grants XP from the `heroXP` curve and the flat `riftGold` in `tuning.json`. One clear is enough to leave level 1. The village shows level, gold, Dust, Shards, and Embers. Each level after 1 adds `heroHPPerLevel` hit points on the next fight through `RoomSetup.bonusHP`, and banks one Glyph Point with no UI. Levels stop at 100. Paragon is not built.
+A finished rift, clear or death, grants XP from the `heroXP` curve and the flat `riftGold` in `tuning.json`. One clear is enough to leave level 1. The village shows level, Anula, Dust, Facets, and Echoes. Each level after 1 adds `heroHPPerLevel` hit points on the next fight through `RoomSetup.bonusHP`, and banks one Glyph Point with no UI. Levels stop at 100. Paragon is not built.
 
-The smith salvages by hand: Common to Dust, Rare to Shards, Unique to Embers plus one Codex signature. A Unique asks first. Equipped pieces are refused. Raising an item costs Dust and gold from `tuning.json`, starting at item level 11 and growing by repeated multiplication, and stops at best Depth + 10. The bag and the smith show equipped state and the two arrows, and both update after an equip.
+The smith salvages by hand: Common to Dust, Rare to Facets, Unique to Echoes plus one Codex signature. A Unique asks first. Equipped pieces are refused. Raising an item costs Dust and gold from `tuning.json`, starting at item level 11 and growing by repeated multiplication, and stops at best Depth + 10. The button says `Needs Depth N` while a drop is already at that cap. The bag and the smith group by slot, show what is worn, and update the two arrows after an equip. An empty slot auto-equips the strongest fitting piece. Auto-salvage by rarity (commons, then rares) is off until toggled. Uniques, equipped, locked, and favorite pieces are never auto-salvaged.
+
+The result card shows the level and the Anula the rift paid. A full bag says the bag is full. The gate calls the Depth timer the Lantern and leaves it unlit on a Delve. The shield button reads Ward. The fight HUD shows `Floor n/n` and a Guardian meter.
 
 `-seed` still jumps into a fight. A normal launch opens on the village.
 
@@ -16,14 +18,14 @@ Simulator, iPhone 16 (iOS 18.6): panned to the Apothecary and back, opened the g
 
 ## Still open
 
-The done-when is still a cold launch on a physical iPhone, including backgrounding and finding the same save. Raise could not be spent on that simulator run: drops at the current best Depth are already at the cap (item level = best Depth + 10), so Raise waits until Depth moves. A full bag still shows "None" on the result instead of saying the bag is full. Day and night, weather, the moth, and the Later list are untouched.
+The done-when is still a cold launch on a physical iPhone, including backgrounding and finding the same save. Raise waits until a Deep Rift moves best Depth, because drops at the current best are already item level best + 10. Day and night, weather, the moth, and the Later list are untouched.
 
 A person holding the phone should be able to do this in about ten minutes, with no Xcode on screen:
 
 1. Pan a small village.
 2. Tap the well, run a Delve, and come home with loot.
 3. Equip something with an up arrow. The next fight is a bit stronger.
-4. Salvage the rest at the smith so the bag has room. Dust, Shards, or Embers go up. Hero level goes up.
+4. Salvage the rest at the smith so the bag has room. Dust, Facets, or Echoes go up. Hero level goes up.
 
 That is the demo. Depth still only moves on a Deep Rift clear at your best.
 

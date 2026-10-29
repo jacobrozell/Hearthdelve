@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -28,7 +28,7 @@
 		3D652D306ED8253420BA137A /* KenneyPixel.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = KenneyPixel.ttf; sourceTree = "<group>"; };
 		40055E22C1968930646007EC /* HearthTelemetry */ = {isa = PBXFileReference; lastKnownFileType = folder; name = HearthTelemetry; path = Packages/HearthTelemetry; sourceTree = SOURCE_ROOT; };
 		43F4360292CE40A8A31F5879 /* Content */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Content; sourceTree = SOURCE_ROOT; };
-		52462ECCEF964986A1CCA5E4 /* Hearthdelve.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Hearthdelve.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		52462ECCEF964986A1CCA5E4 /* Hearthdelve.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Hearthdelve.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		55B404083D20665CA288A5A3 /* HearthdelveApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HearthdelveApp.swift; sourceTree = "<group>"; };
 		7D83C7E0C1A1F03E3AC9A937 /* HearthRender */ = {isa = PBXFileReference; lastKnownFileType = folder; name = HearthRender; path = Packages/HearthRender; sourceTree = SOURCE_ROOT; };
 		9856498A9FFC90B62D57C230 /* HearthContent */ = {isa = PBXFileReference; lastKnownFileType = folder; name = HearthContent; path = Packages/HearthContent; sourceTree = SOURCE_ROOT; };
@@ -143,12 +143,6 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
-				TargetAttributes = {
-					823E38C667EC9B5191EFA38F = {
-						DevelopmentTeam = 7JT2JB89AV;
-						ProvisioningStyle = Automatic;
-					};
-				};
 			};
 			buildConfigurationList = 9AAA0571F3DA1CD2B3049A76 /* Build configuration list for PBXProject "Hearthdelve" */;
 			compatibilityVersion = "Xcode 14.0";
@@ -169,7 +163,6 @@
 				2305DC913340E8E9EE10D109 /* XCLocalSwiftPackageReference "Packages/HearthTelemetry" */,
 				E4434D87AB2579CE9663512A /* XCLocalSwiftPackageReference "Packages/HearthUI" */,
 			);
-			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -277,8 +270,10 @@
 		B681F557177A5E697261DE3C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "";
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 7JT2JB89AV;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Hearthdelve;
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
@@ -293,6 +288,7 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.jacobrozell.hearthdelve;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = iphoneos;
 				SUPPORTS_MAC_DESIGNED_FOR_IPAD = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -302,8 +298,10 @@
 		BD7F1E5F422DF788ACAA6DBF /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "";
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 7JT2JB89AV;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Hearthdelve;
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
@@ -318,6 +316,7 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.jacobrozell.hearthdelve;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = iphoneos;
 				SUPPORTS_MAC_DESIGNED_FOR_IPAD = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";

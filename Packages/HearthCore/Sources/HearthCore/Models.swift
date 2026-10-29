@@ -235,7 +235,7 @@ public struct XPCurveTuning: Codable, Sendable, Equatable {
     public var growth: Double
 }
 
-/// Salvage yields and the starting cost to raise an item one level. Growth is applied by repeated multiplication.
+/// Salvage yields and the smith prices the spec leaves open. Growth and re-roll doubling use repeated multiplication.
 public struct SmithTuning: Codable, Sendable, Equatable {
     public var commonDust: Double
     public var rareShards: Double
@@ -243,6 +243,65 @@ public struct SmithTuning: Codable, Sendable, Equatable {
     public var raiseDust: Double
     public var raiseGold: Double
     public var raiseGrowth: Double
+    /// Shards for the first re-roll of one affix on a Rare. Each later re-roll on that item doubles it.
+    public var rerollRareShards: Double
+    /// Embers for the first re-roll of one affix on a Unique.
+    public var rerollUniqueEmbers: Double
+    /// Shards to craft one Rare of a chosen slot and type.
+    public var craftRareShards: Double
+    /// Embers to turn a Unique into another Unique of the same slot.
+    public var transmuteEmbers: Double
+
+    private enum CodingKeys: String, CodingKey {
+        case commonDust, rareShards, uniqueEmbers, raiseDust, raiseGold, raiseGrowth
+        case rerollRareShards, rerollUniqueEmbers, craftRareShards, transmuteEmbers
+    }
+
+    public init(
+        commonDust: Double, rareShards: Double, uniqueEmbers: Double,
+        raiseDust: Double, raiseGold: Double, raiseGrowth: Double,
+        rerollRareShards: Double = 4, rerollUniqueEmbers: Double = 2,
+        craftRareShards: Double = 8, transmuteEmbers: Double = 12
+    ) {
+        self.commonDust = commonDust
+        self.rareShards = rareShards
+        self.uniqueEmbers = uniqueEmbers
+        self.raiseDust = raiseDust
+        self.raiseGold = raiseGold
+        self.raiseGrowth = raiseGrowth
+        self.rerollRareShards = rerollRareShards
+        self.rerollUniqueEmbers = rerollUniqueEmbers
+        self.craftRareShards = craftRareShards
+        self.transmuteEmbers = transmuteEmbers
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        commonDust = try container.decode(Double.self, forKey: .commonDust)
+        rareShards = try container.decode(Double.self, forKey: .rareShards)
+        uniqueEmbers = try container.decode(Double.self, forKey: .uniqueEmbers)
+        raiseDust = try container.decode(Double.self, forKey: .raiseDust)
+        raiseGold = try container.decode(Double.self, forKey: .raiseGold)
+        raiseGrowth = try container.decode(Double.self, forKey: .raiseGrowth)
+        rerollRareShards = try container.decodeIfPresent(Double.self, forKey: .rerollRareShards) ?? 4
+        rerollUniqueEmbers = try container.decodeIfPresent(Double.self, forKey: .rerollUniqueEmbers) ?? 2
+        craftRareShards = try container.decodeIfPresent(Double.self, forKey: .craftRareShards) ?? 8
+        transmuteEmbers = try container.decodeIfPresent(Double.self, forKey: .transmuteEmbers) ?? 12
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(commonDust, forKey: .commonDust)
+        try container.encode(rareShards, forKey: .rareShards)
+        try container.encode(uniqueEmbers, forKey: .uniqueEmbers)
+        try container.encode(raiseDust, forKey: .raiseDust)
+        try container.encode(raiseGold, forKey: .raiseGold)
+        try container.encode(raiseGrowth, forKey: .raiseGrowth)
+        try container.encode(rerollRareShards, forKey: .rerollRareShards)
+        try container.encode(rerollUniqueEmbers, forKey: .rerollUniqueEmbers)
+        try container.encode(craftRareShards, forKey: .craftRareShards)
+        try container.encode(transmuteEmbers, forKey: .transmuteEmbers)
+    }
 }
 
 public struct RoomTuning: Codable, Sendable, Equatable {

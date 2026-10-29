@@ -60,7 +60,7 @@ public enum VillageHamlet {
     }
 
     public static func make(names: [String: String] = [:], unlocks: [String: Int] = [:]) -> VillageSnapshot {
-        let depths = unlocks.isEmpty ? ["apothecary": 2, "library": 3, "map_room": 5] : unlocks
+        let depths = unlocks.isEmpty ? ["apothecary": 2, "library": 3, "map_room": 5, "stash_house": 8] : unlocks
         var ground = [Int](repeating: 1, count: columns * rows)
         for row in 0..<rows {
             for column in 0..<columns {
@@ -87,6 +87,8 @@ public enum VillageHamlet {
         paint(9, 16, 115, into: &props)
         paint(23, 16, 83, into: &props)
         paint(13, 17, 104, into: &props)
+        stamp(column: 7, row: 20, roof: .slate, wall: .stone, into: &ground)
+        paint(9, 19, 103, into: &props)
 
         func title(_ id: String, _ fallback: String) -> String { names[id] ?? fallback }
         let buildings = [
@@ -98,13 +100,14 @@ public enum VillageHamlet {
             ),
             cottage("library", title("library", "Library"), column: 16, depth: depths["library"] ?? 3),
             cottage("map_room", title("map_room", "Map Room"), column: 21, depth: depths["map_room"] ?? 5),
+            cottage("stash_house", title("stash_house", "Stash House"), column: 7, row: 20, depth: depths["stash_house"] ?? 8),
         ]
         return VillageSnapshot(columns: columns, rows: rows, tileset: "tiny-town", ground: ground, props: props, buildings: buildings)
     }
 
-    private static func cottage(_ id: String, _ name: String, column: Int, depth: Int?) -> VillageBuilding {
+    private static func cottage(_ id: String, _ name: String, column: Int, row: Int = 12, depth: Int?) -> VillageBuilding {
         VillageBuilding(
-            id: id, name: name, column: column, row: 12, width: 4, height: 4,
+            id: id, name: name, column: column, row: row, width: 4, height: 4,
             unlockDepth: depth, accessibilityLabel: name
         )
     }

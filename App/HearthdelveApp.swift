@@ -28,6 +28,8 @@ enum HearthPlace {
     case gate
     case smith
     case cottage
+    case library
+    case stash
     case rift
 }
 
@@ -79,6 +81,8 @@ final class RiftDriver {
     var glance = CGPoint.zero
     var panCursor = CGSize.zero
     var pendingSalvage: String?
+    var smithNote: String?
+    var stashNote: String?
     var cottageName = ""
     var cottageDepth = 0
 
@@ -136,6 +140,13 @@ final class RiftDriver {
         hamlet = builtHamlet()
         village.show(hamlet)
         glance = village.cameraPoint
+        if fillEmptySlots() {
+            let worn = prepared(base, seed: seed)
+            setup = worn
+            sim = RiftActor(seed: seed, setup: worn)
+            scene.load(room: worn.room)
+            shownRoom = worn.room.id
+        }
     }
 
     func start() {
@@ -170,9 +181,17 @@ final class RiftDriver {
             switch event {
             case .relic(let slot, let rule):
                 let name = setup.relics.indices.contains(slot) ? setup.relics[slot].name : "Relic"
-                flash(rule.map { "Tactic \($0 + 1): \(describe(setup.tactics[$0].condition)) → \(name)" } ?? "You: \(name)", at: snapshot.tick)
+                if let rule, setup.tactics.indices.contains(rule) {
+                    flash(TacticLibrary.line(index: rule, rule: setup.tactics[rule], relicName: relicDisplay), at: snapshot.tick)
+                } else {
+                    flash("You: \(name)", at: snapshot.tick)
+                }
             case .potion(let rule):
-                flash(rule.map { "Tactic \($0 + 1): \(describe(setup.tactics[$0].condition)) → Potion" } ?? "You: Potion", at: snapshot.tick)
+                if let rule, setup.tactics.indices.contains(rule) {
+                    flash(TacticLibrary.line(index: rule, rule: setup.tactics[rule], relicName: relicDisplay), at: snapshot.tick)
+                } else {
+                    flash("You: Potion", at: snapshot.tick)
+                }
             default:
                 break
             }
@@ -197,6 +216,7 @@ final class RiftDriver {
         hud.meter = snapshot.meter
         hud.depth = snapshot.depth
         hud.floor = snapshot.floor
+        hud.floorCount = snapshot.floorCount
         hud.lanternOn = snapshot.lanternOn
         hud.lantern = snapshot.lantern
         hud.enraged = snapshot.entities.contains { $0.enraged }
@@ -290,8 +310,11 @@ final class RiftDriver {
         hud.settled = false
         hud.down = false
         hud.lootLines = []
+        hud.lootEmpty = "None"
+        hud.lootNote = nil
         hud.depthDelta = nil
         hud.resultMessage = nil
+        hud.reward = nil
         hud.enraged = false
         hud.paused = false
     }
@@ -337,13 +360,33 @@ final class RiftDriver {
             openGate()
         case "blacksmith":
             pendingSalvage = nil
+            smithNote = nil
             place = .smith
+        case "library":
+            openOrLocked(id, unlocked: .library)
+        case "stash_house":
+            stashNote = nil
+            openOrLocked(id, unlocked: .stash)
         default:
-            guard let building = hamlet.buildings.first(where: { $0.id == id }) else { return }
-            cottageName = building.name
-            cottageDepth = building.unlockDepth ?? 2
-            place = .cottage
+            openOrLocked(id, unlocked: nil)
         }
+    }
+
+    private func openOrLocked(_ id: String, unlocked: HearthPlace?) {
+        guard let building = hamlet.buildings.first(where: { $0.id == id }) else { return }
+        if let depth = building.unlockDepth, frontier < depth {
+            cottageName = building.name
+            cottageDepth = depth
+            place = .cottage
+            return
+        }
+        if let unlocked {
+            place = unlocked
+            return
+        }
+        cottageName = building.name
+        cottageDepth = building.unlockDepth ?? 2
+        place = .cottage
     }
 
     func salvage(_ id: String) {
@@ -396,15 +439,172 @@ final class RiftDriver {
             let marks = arrows(for: piece, against: loadout)
             let equipped = wearing(item.id, loadout)
             let cost = SmithRules.raiseCost(itemLevel: item.itemLevel, tuning: tuning)
-            let atCap = item.itemLevel >= SmithRules.cap(bestDepth: best)
-            let caption = atCap ? "At the cap" : "\(whole(cost.dust)) Dust, \(whole(cost.gold)) Gold"
+            let caption = SmithRules.raiseCaption(itemLevel: item.itemLevel, bestDepth: best, tuning: tuning)
             let afford = save.inventory.dust + 0.000_001 >= cost.dust && save.inventory.gold + 0.000_001 >= cost.gold
+            let rerollCost = SmithRules.rerollCost(rarity: item.rarity, times: item.rerolls, tuning: tuning)
+            let canReroll = rerollCost.map { save.inventory.shards + 0.000_001 >= $0.shards && save.inventory.embers + 0.000_001 >= $0.embers } ?? false
+            let canTransmute = item.rarity == "unique" && save.inventory.embers + 0.000_001 >= tuning.transmuteEmbers
+            let affixes = piece.affixes.enumerated().map { index, roll in
+                let name = catalog?.itemAffixes.first { $0.id == roll.id }?.name ?? roll.stat
+                return SmithAffix(index: index, name: name, detail: AffixFormat.line(name: name, value: roll.value))
+            }
             return SmithLine(
                 id: item.id, text: "\(piece.rarityName) \(piece.name) \(piece.itemLevel)",
+                slot: piece.slot, slotName: GearSlots.name(piece.slot),
                 damageArrow: marks.0, toughnessArrow: marks.1, equipped: equipped,
-                canSalvage: equipped == false, canRaise: atCap == false && afford, raiseCaption: caption
+                canSalvage: equipped == false,
+                canRaise: item.itemLevel < SmithRules.cap(bestDepth: best) && afford,
+                raiseCaption: caption,
+                affixes: affixes,
+                canReroll: canReroll && affixes.isEmpty == false,
+                rerollCaption: SmithRules.rerollCaption(rarity: item.rarity, times: item.rerolls, tuning: tuning) ?? "",
+                canTransmute: canTransmute,
+                transmuteCaption: item.rarity == "unique" ? SmithRules.transmuteCaption(tuning: tuning) : "",
+                signature: signatureSentence(item)
             )
         }
+    }
+
+    func craftCaption() -> String {
+        SmithRules.craftCaption(tuning: smithTuning)
+    }
+
+    func craftChoices() -> [CraftChoice] {
+        guard let catalog else { return [] }
+        return catalog.lootTable(pity: 0, equipped: [], idPrefix: "craft").bases.map {
+            CraftChoice(id: $0.id, name: $0.name, slot: $0.slot, slotName: GearSlots.name($0.slot))
+        }
+    }
+
+    func reroll(_ id: String, index: Int) {
+        guard let catalog, let slot = save.inventory.bag.firstIndex(where: { $0.id == id }) else { return }
+        let item = save.inventory.bag[slot]
+        let piece = asLoot(item)
+        var rng = smithRNG(extra: UInt64(item.rerolls))
+        switch SmithRules.reroll(
+            rarity: item.rarity, slot: piece.slot, affixes: piece.affixes, index: index, times: item.rerolls,
+            shards: save.inventory.shards, embers: save.inventory.embers, pool: catalog.itemAffixes,
+            tuning: smithTuning, rng: &rng
+        ) {
+        case .rerolled(let affixes, let shards, let embers):
+            save.inventory.bag[slot].affixes = affixes.map(\.saved)
+            save.inventory.bag[slot].rerolls += 1
+            save.inventory.shards -= shards
+            save.inventory.embers -= embers
+            smithNote = nil
+            saveGame()
+        case .refused:
+            break
+        }
+    }
+
+    func craft(slot: String, typeID: String) {
+        guard let catalog else { return }
+        if save.inventory.bag.count >= InventorySave.bagCapacity {
+            smithNote = StashRules.bagFull
+            return
+        }
+        var rng = smithRNG(extra: UInt64(save.inventory.bag.count))
+        let id = "craft-\(save.runSeed)-\(save.inventory.bag.count)"
+        switch SmithRules.craft(
+            slot: slot, typeID: typeID, bases: catalog.lootTable(pity: 0, equipped: [], idPrefix: "craft").bases,
+            affixes: catalog.itemAffixes, shards: save.inventory.shards, bagCount: save.inventory.bag.count,
+            bagCapacity: InventorySave.bagCapacity, itemLevel: SmithRules.cap(bestDepth: max(1, save.bestDepth)),
+            tuning: smithTuning, rng: &rng, id: id
+        ) {
+        case .crafted(let item, let shards):
+            guard save.inventory.store(stored(item)) else {
+                smithNote = StashRules.bagFull
+                return
+            }
+            save.inventory.shards -= shards
+            smithNote = nil
+            saveGame()
+        case .refused("bag"):
+            smithNote = StashRules.bagFull
+        case .refused:
+            break
+        }
+    }
+
+    func transmute(_ id: String) {
+        guard let catalog, let index = save.inventory.bag.firstIndex(where: { $0.id == id }) else { return }
+        let item = save.inventory.bag[index]
+        let uniques = catalog.uniques.map { LootUnique(id: $0.id, name: $0.name, slot: $0.slot) }
+        var rng = smithRNG(extra: stableMix(item.definition))
+        switch SmithRules.transmute(
+            rarity: item.rarity, slot: slot(of: item), currentID: item.definition, uniques: uniques,
+            embers: save.inventory.embers, tuning: smithTuning, rng: &rng
+        ) {
+        case .transmuted(let unique, let embers):
+            save.inventory.bag[index].definition = unique.id
+            save.inventory.bag[index].signature = unique.id
+            save.inventory.bag[index].rerolls = 0
+            save.inventory.embers -= embers
+            smithNote = nil
+            saveGame()
+        case .refused:
+            break
+        }
+    }
+
+    func moveToStash(_ id: String) {
+        let reason = save.inventory.moveToStash(id: id, equipped: wearing(id, save.loadouts.first))
+        if let reason {
+            stashNote = StashRules.note(for: reason)
+            return
+        }
+        stashNote = nil
+        saveGame()
+    }
+
+    func moveToBag(_ id: String) {
+        let reason = save.inventory.moveToBag(id: id)
+        if let reason {
+            stashNote = StashRules.note(for: reason)
+            return
+        }
+        stashNote = nil
+        saveGame()
+    }
+
+    func stashLines() -> [LootLine] {
+        save.inventory.stash.map { item in
+            let piece = asLoot(item)
+            return LootLine(
+                id: item.id, text: "\(piece.rarityName) \(piece.name) \(piece.itemLevel)",
+                slot: piece.slot, slotName: GearSlots.name(piece.slot),
+                damageArrow: 0, toughnessArrow: 0, equipped: false, details: itemDetails(item)
+            )
+        }
+    }
+
+    func tacticLines() -> [TacticEditLine] {
+        currentTactics().enumerated().map { index, rule in
+            TacticEditLine(
+                id: index,
+                caption: TacticLibrary.line(index: index, rule: rule, relicName: relicDisplay),
+                kind: rule.condition.kind,
+                adjusts: TacticLibrary.adjusts(rule.condition.kind)
+            )
+        }
+    }
+
+    func tacticKinds() -> [TacticKindChoice] {
+        TacticLibrary.kinds.map { TacticKindChoice(id: $0, name: TacticLibrary.kindLabel($0)) }
+    }
+
+    func chooseTacticKind(_ index: Int, _ kind: String) {
+        guard let condition = TacticLibrary.preset(kind) else { return }
+        let rules = currentTactics()
+        if rules.indices.contains(index), rules[index].condition.kind == kind { return }
+        guard let next = TacticLibrary.replace(rules, index: index, condition: condition, fallback: base.tactics) else { return }
+        storeTactics(next)
+    }
+
+    func nudgeTactic(_ index: Int, _ delta: Int) {
+        guard let next = TacticLibrary.nudge(currentTactics(), index: index, delta: delta, fallback: base.tactics) else { return }
+        storeTactics(next)
     }
 
     var heroLevel: Int { save.hero.level }
@@ -444,8 +644,11 @@ final class RiftDriver {
         hud.settled = false
         hud.down = false
         hud.lootLines = []
+        hud.lootEmpty = "None"
+        hud.lootNote = nil
         hud.depthDelta = nil
         hud.resultMessage = nil
+        hud.reward = nil
         hud.enraged = false
         hud.paused = false
         shownRoom = ""
@@ -470,6 +673,21 @@ final class RiftDriver {
         )
     }
 
+    func wornSlots() -> [GearSlotLine] {
+        let loadout = save.loadouts.first
+        return GearSlots.order.map { slot in
+            let wearing: String
+            if let id = loadout.flatMap({ equippedID(slot, $0) }),
+               let item = save.inventory.bag.first(where: { $0.id == id }) {
+                let piece = asLoot(item)
+                wearing = "\(piece.rarityName) \(piece.name) \(piece.itemLevel)"
+            } else {
+                wearing = "Empty"
+            }
+            return GearSlotLine(id: slot, name: GearSlots.name(slot), wearing: wearing)
+        }
+    }
+
     func bagLines() -> [LootLine] {
         let loadout = save.loadouts.first
         return save.inventory.bag.map { item in
@@ -477,7 +695,9 @@ final class RiftDriver {
             let marks = arrows(for: piece, against: loadout)
             return LootLine(
                 id: item.id, text: "\(piece.rarityName) \(piece.name) \(piece.itemLevel)",
-                damageArrow: marks.0, toughnessArrow: marks.1, equipped: wearing(item.id, loadout)
+                slot: piece.slot, slotName: GearSlots.name(piece.slot),
+                damageArrow: marks.0, toughnessArrow: marks.1, equipped: wearing(item.id, loadout),
+                details: itemDetails(item)
             )
         }
     }
@@ -495,8 +715,11 @@ final class RiftDriver {
         hud.tactic = nil
         hud.settled = false
         hud.lootLines = []
+        hud.lootEmpty = "None"
+        hud.lootNote = nil
         hud.depthDelta = nil
         hud.resultMessage = nil
+        hud.reward = nil
         hud.enraged = false
         shownRoom = ""
         scene.load(room: nextSetup.room)
@@ -517,15 +740,75 @@ final class RiftDriver {
         }
         save.loadouts[0] = loadout
         saveGame()
-        hud.lootLines = hud.lootLines.map { line in
-            var line = line
-            line.equipped = wearing(line.id, loadout)
-            return line
-        }
+        refreshLootLines(loadout)
     }
 
     func saveGame() {
         try? store.write(save)
+    }
+
+    /// Puts the strongest bag piece into each slot that is still empty.
+    @discardableResult
+    private func fillEmptySlots() -> Bool {
+        guard save.loadouts.isEmpty == false else { return false }
+        var loadout = save.loadouts[0]
+        let choices = save.inventory.bag.map { asLoot($0) }
+        let p0 = catalog?.tuning.combat.p0 ?? 10
+        let h0 = catalog?.tuning.combat.h0 ?? 100
+        var changed = false
+        for slot in GearSlots.order {
+            guard let id = GearEquip.fill(slot: slot, wornID: equippedID(slot, loadout), choices: choices, p0: p0, h0: h0) else { continue }
+            switch slot {
+            case "melee": loadout.melee = id
+            case "ranged": loadout.ranged = id
+            case "relic": loadout.relics = [id]
+            default: loadout.armor[slot] = id
+            }
+            changed = true
+        }
+        guard changed else { return false }
+        save.loadouts[0] = loadout
+        return true
+    }
+
+    var salvageCommons: Bool { save.gameplay.lootRules.contains(SmithRules.salvageCommon) }
+    var salvageRares: Bool { save.gameplay.lootRules.contains(SmithRules.salvageRare) }
+
+    func toggleSalvageCommons() { toggleSalvage(SmithRules.salvageCommon) }
+    func toggleSalvageRares() { toggleSalvage(SmithRules.salvageRare) }
+
+    private func toggleSalvage(_ token: String) {
+        if let index = save.gameplay.lootRules.firstIndex(of: token) {
+            save.gameplay.lootRules.remove(at: index)
+        } else {
+            save.gameplay.lootRules.append(token)
+            _ = runAutoSalvage()
+        }
+        saveGame()
+    }
+
+    @discardableResult
+    private func runAutoSalvage() -> (commons: Int, rares: Int) {
+        let loadout = save.loadouts.first
+        let candidates = save.inventory.bag.map { item in
+            SmithRules.SalvageCandidate(
+                id: item.id, rarity: item.rarity, signature: item.signature,
+                equipped: wearing(item.id, loadout), locked: item.locked, favorite: item.favorite
+            )
+        }
+        let picks = SmithRules.autoSalvage(items: candidates, rules: save.gameplay.lootRules, tuning: smithTuning)
+        var commons = 0
+        var rares = 0
+        for pick in picks {
+            guard let item = save.inventory.bag.first(where: { $0.id == pick.id }) else { continue }
+            if item.rarity == "rare" { rares += 1 } else { commons += 1 }
+            save.inventory.bag.removeAll { $0.id == pick.id }
+            save.inventory.dust += pick.yield.dust
+            save.inventory.shards += pick.yield.shards
+            save.inventory.embers += pick.yield.embers
+            SmithRules.record(signature: pick.yield.codexSignature, codex: &save.codex.signatures)
+        }
+        return (commons, rares)
     }
 
     private func prepared(_ bare: RoomSetup, seed: UInt64) -> RoomSetup {
@@ -539,9 +822,10 @@ final class RiftDriver {
         rift.guardian = guardian
         if let catalog {
             let loadout = save.loadouts.first
-            rift.loot = catalog.lootTable(pity: save.inventory.lootPity, equipped: equipped(loadout, depth: next.depth, catalog: catalog), idPrefix: "\(seed)-\(save.inventory.bag.count)")
+            rift.loot = catalog.lootTable(pity: save.inventory.lootPity, equipped: equipped(loadout, catalog: catalog), idPrefix: "\(seed)-\(save.inventory.bag.count)")
         }
         next.rift = rift
+        next.tactics = TacticLibrary.resolved(save.loadouts.first?.tactics.map(\.rule) ?? [], fallback: next.tactics)
         if let catalog, let loadout = save.loadouts.first {
             apply(loadout, catalog: catalog, to: &next)
         }
@@ -552,23 +836,35 @@ final class RiftDriver {
 
     private func accept(_ result: RiftResult) {
         save.bestDepth = DepthRules.nextBest(best: save.bestDepth, foughtAt: result.depth, delta: result.depthDelta, died: result.died)
-        grantProgress()
+        hud.reward = grantProgress()
         guard setup.rift?.loot != nil else {
             saveGame()
             return
         }
+        let startingPity = save.inventory.lootPity
         let room = InventorySave.bagCapacity - save.inventory.bag.count
         let kept = LootRoller.admit(result.items, room: room)
         for item in kept {
             _ = save.inventory.store(stored(item))
         }
-        save.inventory.lootPity = result.pity
+        save.inventory.lootPity = LootRoller.pity(starting: startingPity, kept: kept)
+        fillEmptySlots()
+        let broken = runAutoSalvage()
         saveGame()
         let loadout = save.loadouts.first
-        hud.lootLines = kept.map { item in
-            LootLine(
+        let still = kept.filter { item in save.inventory.bag.contains { $0.id == item.id } }
+        hud.lootNote = SmithRules.salvageNote(commons: broken.commons, rares: broken.rares)
+        hud.lootEmpty = result.items.isEmpty || still.isEmpty == false ? "None" : "The bag is full."
+        hud.lootLines = still.map { item in
+            let marks = arrows(for: item, against: loadout)
+            return LootLine(
                 id: item.id, text: "\(item.rarityName) \(item.name) \(item.itemLevel)",
-                damageArrow: item.damageArrow, toughnessArrow: item.toughnessArrow, equipped: wearing(item.id, loadout)
+                slot: item.slot, slotName: GearSlots.name(item.slot),
+                damageArrow: marks.0, toughnessArrow: marks.1, equipped: wearing(item.id, loadout),
+                details: signatureLine(item.signature) + item.affixes.map { roll in
+                    let name = catalog?.itemAffixes.first { $0.id == roll.id }?.name ?? roll.stat
+                    return AffixFormat.line(name: name, value: roll.value)
+                }
             )
         }
     }
@@ -593,25 +889,22 @@ final class RiftDriver {
         return item.definition
     }
 
-    private func equipped(_ loadout: LoadoutSave?, depth: Int, catalog: ContentCatalog) -> [LootItem] {
+    private func equipped(_ loadout: LoadoutSave?, catalog: ContentCatalog) -> [LootItem] {
         var gear: [LootItem] = []
-        func add(_ id: String?, slot: String, fallback: String, name: String, fallbackWhenEmpty: Bool) {
-            if let id, let item = save.inventory.bag.first(where: { $0.id == id }) {
-                gear.append(LootItem(
-                    id: item.id, definition: item.definition, name: itemName(item, catalog: catalog), slot: slot,
-                    itemLevel: item.itemLevel, rarity: item.rarity,
-                    affixes: LootAffixRoll.parse(item.affixes, definitions: catalog.itemAffixes),
-                    signature: item.signature, damageArrow: 0, toughnessArrow: 0
-                ))
-            } else if fallbackWhenEmpty {
-                gear.append(.plain(id: "worn-\(slot)", name: name, slot: slot, itemLevel: depth + 10, definition: fallback))
-            }
+        func add(_ id: String?, slot: String) {
+            guard let id, let item = save.inventory.bag.first(where: { $0.id == id }) else { return }
+            gear.append(LootItem(
+                id: item.id, definition: item.definition, name: itemName(item, catalog: catalog), slot: slot,
+                itemLevel: item.itemLevel, rarity: item.rarity,
+                affixes: LootAffixRoll.parse(item.affixes, definitions: catalog.itemAffixes),
+                signature: item.signature, damageArrow: 0, toughnessArrow: 0
+            ))
         }
-        add(loadout?.melee, slot: "melee", fallback: "sword", name: "Sword", fallbackWhenEmpty: true)
-        add(loadout?.ranged, slot: "ranged", fallback: "bow", name: "Bow", fallbackWhenEmpty: true)
-        add(loadout?.relics.first, slot: "relic", fallback: "ember_flask", name: "Ember Flask", fallbackWhenEmpty: true)
+        add(loadout?.melee, slot: "melee")
+        add(loadout?.ranged, slot: "ranged")
+        add(loadout?.relics.first, slot: "relic")
         for slot in ["helm", "chest", "legs", "boots"] {
-            add(loadout?.armor[slot], slot: slot, fallback: slot, name: slot, fallbackWhenEmpty: false)
+            add(loadout?.armor[slot], slot: slot)
         }
         return gear
     }
@@ -624,7 +917,8 @@ final class RiftDriver {
         if let worn = bagItem(loadout.melee), let weapon = weapon(worn, kind: .melee, catalog: catalog) { setup.melee = weapon }
         if let worn = bagItem(loadout.ranged), let weapon = weapon(worn, kind: .ranged, catalog: catalog) { setup.ranged = weapon }
         if let worn = bagItem(loadout.relics.first), let relic = relic(worn, catalog: catalog), setup.relics.isEmpty == false {
-            setup.relics[0] = relic
+            let rolls = LootAffixRoll.parse(worn.affixes, definitions: catalog.itemAffixes)
+            setup.relics[0] = relic.tuned(by: rolls)
         }
         var signatures: [SignatureSpec] = []
         for id in [loadout.melee, loadout.ranged, loadout.relics.first].compactMap({ $0 }) + Array(loadout.armor.values) {
@@ -632,18 +926,13 @@ final class RiftDriver {
             signatures.append(catalog.resolved(unique.effect))
         }
         setup.signatures = signatures
-        var bonus = 0.0
-        var rating = 0.0
-        var curves = BalanceCurves()
-        for slot in ["helm", "chest", "legs", "boots"] {
-            guard let worn = bagItem(loadout.armor[slot]) else { continue }
-            let rolls = LootAffixRoll.parse(worn.affixes, definitions: catalog.itemAffixes)
-            let hp = curves.heroHitPoints(h0: catalog.tuning.combat.h0, itemLevel: worn.itemLevel)
-            bonus += hp * rolls.filter { $0.stat == "maxHP" }.reduce(0) { $0 + $1.value }
-            rating += hp * rolls.filter { $0.stat == "armor" }.reduce(0) { $0 + $1.value }
+        let pieces: [(itemLevel: Int, affixes: [LootAffixRoll])] = ["helm", "chest", "legs", "boots"].compactMap { slot in
+            guard let worn = bagItem(loadout.armor[slot]) else { return nil }
+            return (worn.itemLevel, LootAffixRoll.parse(worn.affixes, definitions: catalog.itemAffixes))
         }
-        setup.bonusHP = bonus
-        setup.armor = rating
+        let wornArmor = WornArmor.contribution(pieces: pieces, h0: catalog.tuning.combat.h0)
+        setup.bonusHP = wornArmor.bonusHP
+        setup.armor = wornArmor.armor
         let worn = [loadout.melee, loadout.ranged].compactMap { id -> LootItem? in
             guard let item = bagItem(id) else { return nil }
             return asLoot(item)
@@ -659,6 +948,60 @@ final class RiftDriver {
         }
     }
 
+    func heroStats() -> [StatLine] {
+        guard let catalog else { return [] }
+        let loadout = save.loadouts.first
+        func worn(_ id: String?) -> ItemSave? {
+            guard let id else { return nil }
+            return save.inventory.bag.first { $0.id == id }
+        }
+        let meleeItem = worn(loadout?.melee)
+        let rangedItem = worn(loadout?.ranged)
+        let relicItem = worn(loadout?.relics.first)
+        let armor = ["helm", "chest", "legs", "boots"].compactMap { slot -> (itemLevel: Int, affixes: [LootAffixRoll])? in
+            guard let item = worn(loadout?.armor[slot]) else { return nil }
+            return (item.itemLevel, LootAffixRoll.parse(item.affixes, definitions: catalog.itemAffixes))
+        }
+        let meleeWeapon = meleeItem.flatMap { weapon($0, kind: .melee, catalog: catalog) } ?? base.melee
+        let rangedWeapon = rangedItem.flatMap { weapon($0, kind: .ranged, catalog: catalog) } ?? base.ranged
+        let innate = meleeWeapon.innate.kind == "critChance" ? meleeWeapon.innate.chance ?? 0 : 0
+        return HeroSheet.lines(
+            melee: meleeItem.map(asLoot),
+            ranged: rangedItem.map(asLoot),
+            relicAffixes: relicItem.map { LootAffixRoll.parse($0.affixes, definitions: catalog.itemAffixes) } ?? [],
+            armor: armor,
+            level: save.hero.level,
+            perLevelHP: catalog.tuning.heroHPPerLevel,
+            p0: catalog.tuning.combat.p0,
+            h0: catalog.tuning.combat.h0,
+            baseCrit: catalog.tuning.combat.critChance,
+            innateCrit: innate,
+            meleeRate: meleeWeapon.attacksPerSecond,
+            rangedRate: rangedWeapon.attacksPerSecond
+        ).map { StatLine(id: $0.id, name: $0.name, value: $0.value) }
+    }
+
+    private func itemDetails(_ item: ItemSave) -> [String] {
+        var lines: [String] = []
+        let sentence = signatureSentence(item)
+        if sentence.isEmpty == false { lines.append(sentence) }
+        for roll in asLoot(item).affixes {
+            let name = catalog?.itemAffixes.first { $0.id == roll.id }?.name ?? roll.stat
+            lines.append(AffixFormat.line(name: name, value: roll.value))
+        }
+        return lines
+    }
+
+    private func signatureSentence(_ item: ItemSave) -> String {
+        guard item.rarity == "unique", let catalog else { return "" }
+        return catalog.uniques.first { $0.id == item.definition }?.signature ?? ""
+    }
+
+    private func signatureLine(_ id: String?) -> [String] {
+        guard let id, let sentence = catalog?.uniques.first(where: { $0.id == id })?.signature, sentence.isEmpty == false else { return [] }
+        return [sentence]
+    }
+
     private func asLoot(_ item: ItemSave) -> LootItem {
         let definitions = catalog?.itemAffixes ?? []
         return LootItem(
@@ -670,15 +1013,27 @@ final class RiftDriver {
     }
 
     private func arrows(for item: LootItem, against loadout: LoadoutSave?) -> (Int, Int) {
-        guard let loadout, let wornID = equippedID(item.slot, loadout), wornID != item.id,
-              let worn = save.inventory.bag.first(where: { $0.id == wornID }) else { return (0, 0) }
-        let old = asLoot(worn)
+        let worn: LootItem? = {
+            guard let loadout, let wornID = equippedID(item.slot, loadout), wornID != item.id,
+                  let piece = save.inventory.bag.first(where: { $0.id == wornID }) else { return nil }
+            return asLoot(piece)
+        }()
         let p0 = catalog?.tuning.combat.p0 ?? 10
         let h0 = catalog?.tuning.combat.h0 ?? 100
-        return (
-            LootScore.arrow(new: LootScore.damage(itemLevel: item.itemLevel, affixes: item.affixes, p0: p0), old: LootScore.damage(itemLevel: old.itemLevel, affixes: old.affixes, p0: p0)),
-            LootScore.arrow(new: LootScore.toughness(itemLevel: item.itemLevel, affixes: item.affixes, h0: h0), old: LootScore.toughness(itemLevel: old.itemLevel, affixes: old.affixes, h0: h0))
-        )
+        return LootScore.marks(for: item, worn: worn, p0: p0, h0: h0)
+    }
+
+    private func refreshLootLines(_ loadout: LoadoutSave) {
+        hud.lootLines = hud.lootLines.map { line in
+            var line = line
+            line.equipped = wearing(line.id, loadout)
+            if let item = save.inventory.bag.first(where: { $0.id == line.id }) {
+                let marks = arrows(for: asLoot(item), against: loadout)
+                line.damageArrow = marks.0
+                line.toughnessArrow = marks.1
+            }
+            return line
+        }
     }
 
     private func equippedID(_ slot: String, _ loadout: LoadoutSave) -> String? {
@@ -736,22 +1091,36 @@ final class RiftDriver {
     }
 
     private func short(_ name: String) -> String {
-        String(name.split(separator: " ").first ?? Substring(name))
+        let words = name.split(separator: " ")
+        return String(words.last ?? Substring(name))
     }
 
-    private func describe(_ condition: TacticCondition) -> String {
-        let tiles = condition.tiles.map { $0.formatted() } ?? "0"
-        return switch condition.kind {
-        case "always": "always"
-        case "selfHPBelow": "HP below \(Int((condition.value ?? 0) * 100))%"
-        case "eliteWithin": "elite within \(tiles)"
-        case "enemiesWithin": "\(condition.count ?? 1)+ within \(tiles)"
-        case "soulsAtLeast": "Souls ≥ \(Int(condition.value ?? 0))"
-        case "targetBeyond": "target beyond \(tiles)"
-        case "targetIsElite": "target is elite"
-        case "shieldDown": "no shield"
-        default: condition.kind
-        }
+    private func relicDisplay(_ id: String) -> String {
+        if let relic = setup.relics.first(where: { $0.id == id }) { return relic.name }
+        if let relic = catalog?.relics.first(where: { $0.id == id }) { return relic.name }
+        return id
+    }
+
+    private func currentTactics() -> [TacticRule] {
+        TacticLibrary.resolved(save.loadouts.first?.tactics.map(\.rule) ?? [], fallback: base.tactics)
+    }
+
+    private func storeTactics(_ rules: [TacticRule]) {
+        guard save.loadouts.isEmpty == false else { return }
+        save.loadouts[0].tactics = rules.map(TacticSave.init(rule:))
+        saveGame()
+    }
+
+    private func smithRNG(extra: UInt64) -> Xoshiro256StarStar {
+        var seed = UInt64(max(1, save.runSeed))
+        seed &+= extra &* 0x9E3779B97F4A7C15
+        return RNGStreams(seed: seed).loot
+    }
+
+    private func stableMix(_ text: String) -> UInt64 {
+        var hash = FNV64()
+        for byte in text.utf8 { hash.add(byte) }
+        return hash.value
     }
 
     private func builtHamlet() -> VillageSnapshot {
@@ -766,7 +1135,7 @@ final class RiftDriver {
         catalog?.tuning.smith ?? CellarFight.tuning.smith
     }
 
-    private func grantProgress() {
+    private func grantProgress() -> String {
         let curve = catalog?.tuning.heroXP ?? CellarFight.tuning.heroXP
         let grant = HeroProgress.apply(
             xp: HeroProgress.riftXP(level: save.hero.level, curve: curve),
@@ -775,7 +1144,12 @@ final class RiftDriver {
         save.hero.level = grant.level
         save.hero.xp = grant.xp
         save.hero.bankedGlyphPoints = grant.glyphPoints
-        save.inventory.gold += catalog?.tuning.riftGold ?? CellarFight.tuning.riftGold
+        save.syncGlyphBank()
+        let gold = catalog?.tuning.riftGold ?? CellarFight.tuning.riftGold
+        save.inventory.gold += gold
+        let paid = "\(Int(gold.rounded())) Anula"
+        if grant.levelsGained > 0 { return "Level \(grant.level) · \(paid)" }
+        return paid
     }
 
     private func applySalvage(_ yield: SalvageYield, id: String) {
@@ -873,8 +1247,10 @@ struct RiftHost: View {
                 }
                 if driver.place == .bag {
                     BagView(
-                        lines: driver.bagLines(), count: driver.bagLines().count, capacity: InventorySave.bagCapacity,
-                        close: driver.closeOverlay, equip: driver.equip
+                        slots: driver.wornSlots(), stats: driver.heroStats(), lines: driver.bagLines(), count: driver.bagLines().count, capacity: InventorySave.bagCapacity,
+                        salvageCommons: driver.salvageCommons, salvageRares: driver.salvageRares,
+                        close: driver.closeOverlay, equip: driver.equip,
+                        toggleCommons: driver.toggleSalvageCommons, toggleRares: driver.toggleSalvageRares
                     )
                 }
                 if driver.place == .gate {
@@ -897,10 +1273,30 @@ struct RiftHost: View {
                 }
                 if driver.place == .smith {
                     SmithView(
+                        slots: driver.wornSlots(), stats: driver.heroStats(), salvageCommons: driver.salvageCommons, salvageRares: driver.salvageRares,
                         gold: driver.goldAmount, dust: driver.dustAmount, shards: driver.shardAmount, embers: driver.emberAmount,
                         lines: driver.smithLines(), confirming: driver.pendingSalvage != nil,
+                        craftChoices: driver.craftChoices(), craftCaption: driver.craftCaption(), bagFull: driver.bagLines().count >= InventorySave.bagCapacity,
+                        note: driver.smithNote,
                         close: driver.closeOverlay, salvage: driver.salvage, confirmSalvage: driver.confirmSalvage,
-                        cancelSalvage: driver.cancelSalvage, raise: driver.raiseItem, equip: driver.equip
+                        cancelSalvage: driver.cancelSalvage, raise: driver.raiseItem, equip: driver.equip,
+                        toggleCommons: driver.toggleSalvageCommons, toggleRares: driver.toggleSalvageRares,
+                        reroll: driver.reroll, transmute: driver.transmute, craft: driver.craft
+                    )
+                }
+                if driver.place == .library {
+                    LibraryView(
+                        lines: driver.tacticLines(), kinds: driver.tacticKinds(), close: driver.closeOverlay,
+                        chooseKind: driver.chooseTacticKind, nudge: driver.nudgeTactic
+                    )
+                }
+                if driver.place == .stash {
+                    StashView(
+                        bag: driver.bagLines(), stash: driver.stashLines(),
+                        bagCount: driver.bagLines().count, bagCapacity: InventorySave.bagCapacity,
+                        stashCount: driver.stashLines().count, stashCapacity: InventorySave.stashCapacity,
+                        note: driver.stashNote, close: driver.closeOverlay,
+                        toStash: driver.moveToStash, toBag: driver.moveToBag
                     )
                 }
                 if driver.place == .cottage {

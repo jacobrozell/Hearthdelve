@@ -7,7 +7,10 @@ public enum CellarFight {
         paragonXP: XPCurveTuning(base: 1000, growth: 1.02),
         riftGold: 25,
         heroHPPerLevel: 8,
-        smith: SmithTuning(commonDust: 5, rareShards: 2, uniqueEmbers: 1, raiseDust: 8, raiseGold: 10, raiseGrowth: 1.12),
+        smith: SmithTuning(
+            commonDust: 5, rareShards: 2, uniqueEmbers: 1, raiseDust: 8, raiseGold: 10, raiseGrowth: 1.12,
+            rerollRareShards: 4, rerollUniqueEmbers: 2, craftRareShards: 8, transmuteEmbers: 12
+        ),
         soulRegenPerSecond: 1,
         room: RoomTuning(
             heroTilesPerSecond: 3.2, heroReactionSeconds: 0.25, swapTiles: 3,

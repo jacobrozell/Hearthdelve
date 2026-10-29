@@ -6,20 +6,20 @@ todos:
     content: Scaffold XcodeGen app, Swift 6 packages, 16x16 art contract, palette, vendored Kenney packs and kenney-map.json, JSON schema, and content validator
     status: completed
   - id: m0-combat
-    content: "M0: snapshot sim, one room, sword/bow, two Relics, three Tactics, telegraphs, CLI replay, fun gate"
+    content: "M0 systems are in the tree (room, sword/bow, two Relics, three Tactics, CLI replay). Fun gate is unsigned. Do not treat it as passed."
     status: in_progress
   - id: content-catalogs
     content: Author full launch JSON catalogs and reference loadouts in parallel with M0/M1
     status: completed
   - id: art-pipeline
-    content: Kenney style check and style key during M0; 16x16 gap commission (creatures, bosses, icons, moth) starts when the fun gate passes, Mossy first
+    content: Kenney placeholders are in the hamlet and the rift. Style key and 16x16 gap commission wait until the fun gate is signed. Mossy first.
     status: in_progress
   - id: m1-rift
-    content: "M1: Mossy generation, Lantern, Guardian, loot, loadout, local save, session gate"
+    content: "M1 playable: Mossy floors, Lantern, Old Lintel, loot, loadout, local save. Session gate and the physical-phone cold launch are unsigned."
     status: in_progress
   - id: m2-loops
-    content: "M2: Hearth scene, blacksmith, tactics, expeditions, Paragon, onboarding, loop gate"
-    status: pending
+    content: "Evening slice is in: smith re-roll, craft, and transmute; stash of 100; three-rule Library. Expeditions, Paragon, and the rest of M2 are not started. Loop gate open."
+    status: in_progress
   - id: m3-launch
     content: "M3: five biomes, full catalogs, Bestiary cards, iCloud, Game Center, telemetry, StoreKit, audio, ship gate"
     status: pending
@@ -30,6 +30,31 @@ isProject: false
 ---
 
 # Hearthdelve full execution plan
+
+## Status for the next agent (2026-10-28)
+
+**End goal.** Ship the spec in this order. M3 is the launch (five biomes, the buildings a launch player can touch, iCloud, Game Center, telemetry, StoreKit, audio, ship gate). M4 is everything the spec defers (Glyphs, advanced Tactics, companion Expeditions, friendships, Seasons, the Inn card game, supporter pack, expansion, iPad landscape). Spec wins on rules. This plan wins on build order.
+
+**Now.** Version 0.1.0 (1), branch `main`, not submitted. The M2 evening slice sits on the Mossy demo: the smith re-rolls one affix, crafts a Rare, and transmutes a Unique; the Stash House holds 100; the Library edits the three rules the fight already runs. `HEAD` is still `3a4e9db`. Review fixes, gear slots, auto-salvage, the HUD polish, and this slice are uncommitted. Do not claim a physical-phone pass.
+
+**Playable**
+
+- Hamlet, well, gate, 1–3 Mossy floors, result, return home. `-seed N` still jumps into a fight.
+- Delve leaves the Lantern unlit and does not move Depth. Deep Rift burns a 6-minute Lantern; time left is a Depth jump of +3 / +2 / +1 / +0, and only a clear at best Depth advances it. Death keeps loot. Free Deep Rifts stop past Depth 25.
+- Old Lintel is 120× fodder HP and enrages under 30%. That first clear felt sharp with rare item level 11 plus two uniques. The multiple is the spec’s starting number and was not changed.
+- Bag of 40, gear slots, auto-equip into an empty slot, arrows against the worn piece. Smith salvages and raises. Raise is blocked while the drop is already at best Depth + 10; the button says `Needs Depth N`. Auto-salvage by rarity is off until toggled. Uniques, equipped, locked, and favorite are never auto-salvaged.
+- A finished rift, clear or death, grants one level of XP and flat Anula. The result card shows it (`Level N · 25 Anula`). Glyph points bank with no UI. The fight meter reads Charge. Rare salvage reads Facets and unique salvage reads Echoes. Save keys are still gold, shards, embers, and souls.
+- HUD: `Floor n/n`, a Guardian meter, and a Lantern label only on a Deep Rift. The shield button reads Ward. A tactic caption uses the same line the Library shows.
+- Smith, past salvage and raise: re-roll one affix (Facets on a Rare, Echoes on a Unique, other affixes unchanged, cost doubles on that item), craft a Rare of a chosen slot and type, transmute a Unique into another of the same slot. Prices the spec leaves open are in `Content/tuning.json` (first Rare re-roll 4 Facets, first Unique re-roll 2 Echoes, craft 8 Facets, transmute 12 Echoes). A crafted Rare uses the smith's existing item-level cap, best Depth + 10. Equipped pieces still cannot be salvaged. A full bag stays full and says so.
+- Stash House is on the hamlet, locked until best Depth is 8, and moves items both ways with the bag of 40. Equipped pieces stay equipped. Cap 100.
+- Library is locked until best Depth is 3. It edits the three prefilled rules with the condition kinds the fight already evaluates. No fourth slot, no AND/OR, no hold-until.
+- Save schema 1, three copies. A missing re-roll count still decodes as 0. Bugbot, tests, security, architecture, and code smells were run on the earlier demo and the filed fixes are done. Accessibility and data integrity were not run. This slice was not put through those lanes.
+
+**Still the current done-when.** A cold launch on a physical iPhone, including backgrounding and finding the same save. The M0 fun gate and the M1 session gate are also unsigned. Both are Jacob’s call, not an agent’s.
+
+**Do not start unless asked.** Expeditions, Auto-Delve, Lantern Mode, Paragon, Charms, extra loadouts, day and night, weather, the moth, audio, StoreKit, Game Center, iCloud, Glyphs, Wanderer friendship, rooms past Mossy, a fourth tactic slot, and the other buildings (Apothecary, Inn, Chandlery, Reliquary, Garden, Trophy Hall, Lighthouse, Glyphwright). Do not retune Old Lintel.
+
+Read `ongoing/README.md` and `workspace/projects/hearthdelve.md` before editing.
 
 The spec’s roadmap now uses this plan’s milestones (One room, One Rift, Hearth and idle, Launch content) and carries a text version under its diagram so exports keep it. The sequence: four milestones, each blocked by a gate; the first gate is whether auto-combat is fun to watch; 16×16 Kenney CC0 packs as the base art from the first commit, with commissioned 16×16 art filling only the gaps after the fun gate; Glyphs, Seasons, companion Expeditions, full friendship threads, advanced Tactics, the Inn card game, expansions, the supporter pack, and iPad landscape after launch. This plan builds the entire spec in that order. No calendar dates until M0 shows how fast a room, a mob, and a Relic actually get made.
 

@@ -30,6 +30,12 @@ Hearthdelve (working title) is a premium, portrait-mode iOS game where one hero 
 
 The target is a player who wants a real loot game with uncapped depth, on a phone, without free-to-play pressure. Most idle RPGs on the App Store monetize progression; Hearthdelve sells the whole game and lets the numbers go up forever.
 
+## Setting
+
+The store name is Hearthdelve. The saga title is *Avasia: Hearthdelve*. Place, era, and the ledger rules are in [`docs/avasia-game3.md`](docs/avasia-game3.md). This spec still wins on combat and loot numbers.
+
+On screen the currency is Anula, rare salvage is Facets, unique salvage is Echoes, the relic meter is Charge, and the Depth 40 building is the Relay Tower. Save fields stay `gold`, `shards`, `embers`, and `souls` until a migration. Graphics stay on the Kenney hamlet until a later pass.
+
 ## Market comparison
 
 No single iOS game combines classless gear builds, auto-battle, uncapped scaling depth, and fair pricing; each piece exists separately. Soda Dungeon 2 owns idle depth plus a town, Nonstop Knight 2 owns auto-battle ARPG, Eternium owns endless generated Trials, and Melvor Idle and Vampire Survivors prove fair monetization sells. Hearthdelve's bet is the combination.

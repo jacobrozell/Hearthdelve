@@ -39,6 +39,7 @@ final class ContentTests: XCTestCase {
         XCTAssertEqual(catalog.wardens.count, 2)
         XCTAssertEqual(catalog.wanderers.count, 12)
         XCTAssertEqual(catalog.buildings.count, 12)
+        XCTAssertEqual(catalog.buildings.first { $0.id == "lighthouse" }?.name, "Relay Tower")
         let mossy = catalog.mossyRooms()
         XCTAssertEqual(mossy.count, 8)
         XCTAssertEqual(Set(mossy.map(\.tag)), ["entry", "corridor", "small", "large", "side", "arena", "stairs", "alcove"])

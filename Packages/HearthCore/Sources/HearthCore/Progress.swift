@@ -92,6 +92,69 @@ public enum SmithRules {
         return (dust, gold)
     }
 
+    /// The price `raise` spends. Whole numbers stay whole. A grown cost keeps two decimals so the caption matches the charge.
+    public static func raiseCaption(itemLevel: Int, bestDepth: Int, tuning: SmithTuning) -> String {
+        if itemLevel >= cap(bestDepth: bestDepth) { return "Needs Depth \(max(1, bestDepth) + 1)" }
+        let cost = raiseCost(itemLevel: itemLevel, tuning: tuning)
+        return "\(price(cost.dust)) Dust, \(price(cost.gold)) Anula"
+    }
+
+    public static func price(_ value: Double) -> String {
+        if abs(value.rounded() - value) < 0.000_001 { return String(Int(value.rounded())) }
+        let cents = Int((value * 100).rounded())
+        let whole = cents / 100
+        let fraction = abs(cents % 100)
+        return "\(whole).\(fraction < 10 ? "0" : "")\(fraction)"
+    }
+
+    public static let salvageCommon = "salvage:common"
+    public static let salvageRare = "salvage:rare"
+
+    public struct SalvageCandidate: Equatable, Sendable {
+        public var id: String
+        public var rarity: String
+        public var signature: String?
+        public var equipped: Bool
+        public var locked: Bool
+        public var favorite: Bool
+
+        public init(id: String, rarity: String, signature: String?, equipped: Bool, locked: Bool, favorite: Bool) {
+            self.id = id
+            self.rarity = rarity
+            self.signature = signature
+            self.equipped = equipped
+            self.locked = locked
+            self.favorite = favorite
+        }
+    }
+
+    /// Commons and Rares the loot rule will break down. Worn, locked, favorite, and Unique pieces stay.
+    public static func autoSalvage(items: [SalvageCandidate], rules: [String], tuning: SmithTuning) -> [(id: String, yield: SalvageYield)] {
+        items.compactMap { item in
+            guard item.equipped == false, item.locked == false, item.favorite == false else { return nil }
+            guard matches(rarity: item.rarity, rules: rules) else { return nil }
+            guard case .granted(let yield) = salvage(rarity: item.rarity, signature: item.signature, equipped: false, confirmed: true, tuning: tuning) else { return nil }
+            return (item.id, yield)
+        }
+    }
+
+    public static func salvageNote(commons: Int, rares: Int) -> String? {
+        switch (commons, rares) {
+        case (0, 0): return nil
+        case (let count, 0): return "Salvaged \(count) \(count == 1 ? "Common" : "Commons")."
+        case (0, let count): return "Salvaged \(count) \(count == 1 ? "Rare" : "Rares")."
+        default: return "Salvaged \(commons) Commons and \(rares) Rares."
+        }
+    }
+
+    private static func matches(rarity: String, rules: [String]) -> Bool {
+        switch rarity {
+        case "common": rules.contains(salvageCommon)
+        case "rare": rules.contains(salvageRare)
+        default: false
+        }
+    }
+
     public static func salvage(rarity: String, signature: String?, equipped: Bool, confirmed: Bool, tuning: SmithTuning) -> SalvageDecision {
         if equipped { return .refused("equipped") }
         switch rarity {
@@ -117,5 +180,140 @@ public enum SmithRules {
     public static func record(signature: String?, codex: inout [String]) {
         guard let signature, signature.isEmpty == false, codex.contains(signature) == false else { return }
         codex.append(signature)
+    }
+
+    /// Shards for a Rare, Embers for a Unique. `times` is how many re-rolls this item has already taken.
+    /// The next one costs twice as much. Commons have no re-roll.
+    public static func rerollCost(rarity: String, times: Int, tuning: SmithTuning) -> (shards: Double, embers: Double)? {
+        let steps = max(0, times)
+        switch rarity {
+        case "rare": return (doubled(tuning.rerollRareShards, times: steps), 0)
+        case "unique": return (0, doubled(tuning.rerollUniqueEmbers, times: steps))
+        default: return nil
+        }
+    }
+
+    public static func rerollCaption(rarity: String, times: Int, tuning: SmithTuning) -> String? {
+        guard let cost = rerollCost(rarity: rarity, times: times, tuning: tuning) else { return nil }
+        if cost.embers > 0 { return "\(price(cost.embers)) Echoes" }
+        return "\(price(cost.shards)) Facets"
+    }
+
+    /// Replaces one affix. Every other affix keeps its id and its value. The price doubles with `times`.
+    public static func reroll(
+        rarity: String, slot: String, affixes: [LootAffixRoll], index: Int, times: Int,
+        shards: Double, embers: Double, pool: [ItemAffixDefinition], tuning: SmithTuning,
+        rng: inout Xoshiro256StarStar
+    ) -> RerollDecision {
+        guard let cost = rerollCost(rarity: rarity, times: times, tuning: tuning) else { return .refused("rarity") }
+        guard affixes.indices.contains(index) else { return .refused("affix") }
+        if shards + 0.000_001 < cost.shards || embers + 0.000_001 < cost.embers { return .refused("cost") }
+        let locked = Set(affixes.enumerated().compactMap { $0.offset == index ? nil : $0.element.id })
+        let choices = pool.filter { $0.slots.contains(slot) && locked.contains($0.id) == false }.sorted { $0.id < $1.id }
+        guard choices.isEmpty == false else { return .refused("pool") }
+        let definition = choices[Int(rng.next() % UInt64(choices.count))]
+        var next = affixes
+        next[index] = roll(definition, rng: &rng)
+        return .rerolled(affixes: next, shards: cost.shards, embers: cost.embers)
+    }
+
+    public static func craftCaption(tuning: SmithTuning) -> String {
+        "\(price(tuning.craftRareShards)) Facets"
+    }
+
+    public static func transmuteCaption(tuning: SmithTuning) -> String {
+        "\(price(tuning.transmuteEmbers)) Echoes"
+    }
+
+    /// A Rare of the chosen slot and type. A full bag is refused before any Facets are spent.
+    public static func craft(
+        slot: String, typeID: String, bases: [LootBase], affixes: [ItemAffixDefinition],
+        shards: Double, bagCount: Int, bagCapacity: Int, itemLevel: Int, tuning: SmithTuning,
+        rng: inout Xoshiro256StarStar, id: String
+    ) -> CraftDecision {
+        if bagCount >= bagCapacity { return .refused("bag") }
+        if shards + 0.000_001 < tuning.craftRareShards { return .refused("cost") }
+        guard let base = bases.first(where: { $0.id == typeID && $0.slot == slot }) else { return .refused("type") }
+        let rolls = rollAffixes(slot: slot, count: 2, pool: affixes, rng: &rng)
+        let item = LootItem(
+            id: id, definition: base.id, name: base.name, slot: slot, itemLevel: itemLevel,
+            rarity: "rare", affixes: rolls, signature: nil, damageArrow: 0, toughnessArrow: 0
+        )
+        return .crafted(item, shards: tuning.craftRareShards)
+    }
+
+    /// Another Unique of the same slot. The Ember price does not double.
+    public static func transmute(
+        rarity: String, slot: String, currentID: String, uniques: [LootUnique],
+        embers: Double, tuning: SmithTuning, rng: inout Xoshiro256StarStar
+    ) -> TransmuteDecision {
+        guard rarity == "unique" else { return .refused("rarity") }
+        if embers + 0.000_001 < tuning.transmuteEmbers { return .refused("cost") }
+        let pool = uniques.filter { $0.slot == slot && $0.id != currentID }.sorted { $0.id < $1.id }
+        guard pool.isEmpty == false else { return .refused("pool") }
+        return .transmuted(pool[Int(rng.next() % UInt64(pool.count))], embers: tuning.transmuteEmbers)
+    }
+
+    private static func doubled(_ base: Double, times: Int) -> Double {
+        var cost = base
+        for _ in 0..<times { cost *= 2 }
+        return cost
+    }
+
+    private static func rollAffixes(slot: String, count: Int, pool: [ItemAffixDefinition], rng: inout Xoshiro256StarStar) -> [LootAffixRoll] {
+        var choices = pool.filter { $0.slots.contains(slot) }.sorted { $0.id < $1.id }
+        var rolls: [LootAffixRoll] = []
+        for _ in 0..<count where choices.isEmpty == false {
+            let definition = choices.remove(at: Int(rng.next() % UInt64(choices.count)))
+            rolls.append(roll(definition, rng: &rng))
+        }
+        return rolls
+    }
+
+    private static func roll(_ definition: ItemAffixDefinition, rng: inout Xoshiro256StarStar) -> LootAffixRoll {
+        let span = max(0, definition.max - definition.min)
+        let value = definition.min + span * CombatRoll.unitInterval(rng.next())
+        return LootAffixRoll(id: definition.id, stat: definition.stat, value: value)
+    }
+}
+
+public enum RerollDecision: Equatable, Sendable {
+    case rerolled(affixes: [LootAffixRoll], shards: Double, embers: Double)
+    case refused(String)
+}
+
+public enum CraftDecision: Equatable, Sendable {
+    case crafted(LootItem, shards: Double)
+    case refused(String)
+}
+
+public enum TransmuteDecision: Equatable, Sendable {
+    case transmuted(LootUnique, embers: Double)
+    case refused(String)
+}
+
+/// The stash holds 100. Equipped pieces stay equipped. A full bag stays full.
+public enum StashRules {
+    public static let capacity = 100
+    public static let bagFull = "The bag is full."
+    public static let stashFull = "The stash is full."
+
+    /// Nil when the move is allowed. `toStash` false means the item is coming back to the bag.
+    public static func refusal(equipped: Bool, stashCount: Int, bagCount: Int, bagCapacity: Int, toStash: Bool) -> String? {
+        if toStash {
+            if equipped { return "equipped" }
+            if stashCount >= capacity { return "stash" }
+            return nil
+        }
+        if bagCount >= bagCapacity { return "bag" }
+        return nil
+    }
+
+    public static func note(for refusal: String) -> String? {
+        switch refusal {
+        case "bag": bagFull
+        case "stash": stashFull
+        default: nil
+        }
     }
 }
