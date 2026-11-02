@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 ROOT="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)"
-SRC="${KENNEY_ROOT:-$HOME/Desktop/personal/Kenney Game Assets All-in-1 3.7.0}"
+SRC="${KENNEY_ROOT:-$HOME/Desktop/personal/assets/Kenney Game Assets All-in-1 3.7.0}"
 ART="$ROOT/Art/vendor/kenney"
 AUDIO="$ROOT/Audio/vendor/kenney"
 
