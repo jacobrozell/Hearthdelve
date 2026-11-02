@@ -90,6 +90,43 @@ final class MetaTests: XCTestCase {
         XCTAssertEqual(rare, .granted(SalvageYield(dust: 0, shards: 2, embers: 0, codexSignature: nil)))
         let equipped = SmithRules.salvage(rarity: "common", signature: nil, equipped: true, confirmed: true, tuning: smith)
         XCTAssertEqual(equipped, .refused("equipped"))
+        let locked = SmithRules.salvage(rarity: "common", signature: nil, equipped: false, confirmed: true, tuning: smith, locked: true)
+        XCTAssertEqual(locked, .refused("kept"))
+        let favored = SmithRules.salvage(rarity: "rare", signature: nil, equipped: false, confirmed: true, tuning: smith, favorite: true)
+        XCTAssertEqual(favored, .refused("kept"))
+    }
+
+    func testSalvagePreviewAndBagOrder() {
+        let items = [
+            SmithRules.SalvageCandidate(id: "c", rarity: "common", signature: nil, equipped: false, locked: false, favorite: false),
+            SmithRules.SalvageCandidate(id: "c2", rarity: "common", signature: nil, equipped: false, locked: false, favorite: false),
+            SmithRules.SalvageCandidate(id: "kept", rarity: "common", signature: nil, equipped: false, locked: false, favorite: true),
+            SmithRules.SalvageCandidate(id: "rare", rarity: "rare", signature: nil, equipped: false, locked: false, favorite: false),
+        ]
+        let preview = SmithRules.preview(items: items, rules: [SmithRules.salvageCommon, SmithRules.salvageRare], tuning: smith)
+        XCTAssertEqual(preview.commons, 2)
+        XCTAssertEqual(preview.rares, 1)
+        XCTAssertEqual(preview.sentence, "2 Commons become 10 Dust. 1 Rare becomes 2 Facets.")
+        XCTAssertNil(SmithRules.preview(items: items, rules: [], tuning: smith).sentence)
+        XCTAssertTrue(BagFilter.upgrades.includes(damage: 1, toughness: -1, equipped: false))
+        XCTAssertFalse(BagFilter.rest.includes(damage: 0, toughness: 0, equipped: true))
+        XCTAssertTrue(BagFilter.rest.includes(damage: -1, toughness: 0, equipped: false))
+        XCTAssertTrue(BagOrder.before(("melee", -1, -1, false, "down"), ("helm", 1, 1, false, "up")))
+        XCTAssertTrue(BagOrder.before(("melee", 1, 0, false, "up"), ("melee", -1, 0, false, "down")))
+        XCTAssertTrue(BagOrder.before(("melee", -1, 0, true, "worn"), ("melee", 1, 0, false, "up")))
+    }
+
+    func testRepeatAndPace() {
+        XCTAssertNil(RiftRepeat.pushTitle(fought: 1, best: 1, deep: false))
+        XCTAssertEqual(RiftRepeat.pushTitle(fought: 1, best: 2, deep: false), "Push Depth 2")
+        XCTAssertNil(RiftRepeat.pushTitle(fought: 25, best: 26, deep: true))
+        XCTAssertEqual(RiftRepeat.pushTitle(fought: 25, best: 26, deep: false), "Push Depth 26")
+        XCTAssertEqual(RiftRepeat.againTitle(depth: 3, deep: true), "Deep Rift 3")
+        XCTAssertNil(RiftRepeat.againTitle(depth: 0, deep: false))
+        XCTAssertEqual(RiftPace.clamp(3), 1)
+        XCTAssertEqual(RiftPace.next(1), 2)
+        XCTAssertEqual(RiftPace.next(2), 4)
+        XCTAssertEqual(RiftPace.next(4), 1)
     }
 
     func testUniqueSalvageAsksBeforeItRecords() {
@@ -274,5 +311,91 @@ final class MetaTests: XCTestCase {
             XCTAssertLessThanOrEqual(building.column + building.width, map.columns)
             XCTAssertLessThanOrEqual(building.row + building.height, map.rows)
         }
+    }
+
+    func testExpeditionMathStaysInsideTheCap() {
+        XCTAssertEqual(ExpeditionRules.capSeconds, 8 * 60 * 60)
+        XCTAssertEqual(ExpeditionRules.efficiency, 0.6)
+        XCTAssertTrue(ExpeditionRules.canSend(.easy))
+        XCTAssertTrue(ExpeditionRules.canSend(.fair))
+        XCTAssertFalse(ExpeditionRules.canSend(.hard))
+        XCTAssertFalse(ExpeditionRules.canSend(.deadly))
+        XCTAssertEqual(ExpeditionRules.defaultDepth(best: 1), 1)
+        XCTAssertEqual(ExpeditionRules.defaultDepth(best: 10), 9)
+        XCTAssertEqual(ExpeditionRules.elapsed(leftAt: 100, now: 50), 0)
+        XCTAssertEqual(ExpeditionRules.elapsed(leftAt: 100, now: 160), 60)
+        XCTAssertEqual(ExpeditionRules.riftCount(away: 7_200, cap: ExpeditionRules.capSeconds, mean: 600), 7.2, accuracy: 0.000_1)
+        XCTAssertEqual(ExpeditionRules.grantedRifts(7.2), 7)
+        XCTAssertEqual(ExpeditionRules.grantedRifts(ExpeditionRules.riftCount(away: 600, cap: ExpeditionRules.capSeconds, mean: 600)), 0)
+        let capped = ExpeditionRules.riftCount(away: 20 * 3_600, cap: ExpeditionRules.capSeconds, mean: 600)
+        XCTAssertEqual(capped, 28.8, accuracy: 0.000_1)
+        XCTAssertEqual(ExpeditionRules.creditedAway(away: 5_000, cap: ExpeditionRules.capSeconds, mean: 600, stillFair: false), 600)
+        XCTAssertEqual(ExpeditionRules.creditedAway(away: 5_000, cap: ExpeditionRules.capSeconds, mean: 600, stillFair: true), 5_000)
+        let sample = ExpeditionRules.sample([
+            ClearTiming(cleared: true, seconds: 10, normalKills: 4, eliteKills: 2),
+            ClearTiming(cleared: false, seconds: 3, normalKills: 1, eliteKills: 0),
+            ClearTiming(cleared: true, seconds: 20, normalKills: 6, eliteKills: 0)
+        ])
+        XCTAssertEqual(sample?.seconds, 15)
+        XCTAssertEqual(sample?.normalKills, 5)
+        XCTAssertEqual(sample?.eliteKills, 1)
+        XCTAssertNil(ExpeditionRules.sample([ClearTiming(cleared: false, seconds: 1, normalKills: 0, eliteKills: 0)]))
+        XCTAssertEqual(ExpeditionRules.duration(45), "45s")
+        XCTAssertEqual(ExpeditionRules.duration(120), "2 min")
+        XCTAssertEqual(ExpeditionRules.duration(3_600), "1h")
+        XCTAssertEqual(ExpeditionRules.duration(5_400), "1h 30m")
+    }
+
+    func testDeskKeepsOneUpgradePerSlot() {
+        func piece(
+            _ id: String,
+            slot: String,
+            itemLevel: Int,
+            damage: Int,
+            toughness: Int,
+            equipped: Bool = false,
+            locked: Bool = false,
+            favorite: Bool = false,
+            rarity: String = "common"
+        ) -> DeskPiece {
+            DeskPiece(
+                id: id, slot: slot, itemLevel: itemLevel,
+                damageArrow: damage, toughnessArrow: toughness,
+                equipped: equipped, locked: locked, favorite: favorite, rarity: rarity
+            )
+        }
+
+        let pieces = [
+            piece("melee-low", slot: "melee", itemLevel: 11, damage: 1, toughness: 0),
+            piece("melee-z", slot: "melee", itemLevel: 14, damage: 1, toughness: 0),
+            piece("melee-a", slot: "melee", itemLevel: 14, damage: 1, toughness: 0),
+            piece("chest-b", slot: "chest", itemLevel: 12, damage: 0, toughness: 1),
+            piece("chest-low", slot: "chest", itemLevel: 11, damage: 0, toughness: 1),
+            piece("chest-a", slot: "chest", itemLevel: 12, damage: 0, toughness: 1),
+            piece("helm-mixed", slot: "helm", itemLevel: 20, damage: -1, toughness: 1),
+            piece("worn", slot: "melee", itemLevel: 30, damage: 1, toughness: 0, equipped: true),
+            piece("unique-down", slot: "ranged", itemLevel: 12, damage: -1, toughness: 0, rarity: "unique"),
+            piece("locked-down", slot: "relic", itemLevel: 12, damage: 0, toughness: -1, locked: true),
+            piece("favorite-down", slot: "boots", itemLevel: 12, damage: -1, toughness: -1, favorite: true),
+            piece("common-down", slot: "legs", itemLevel: 12, damage: -1, toughness: 0),
+            piece("mixed", slot: "ranged", itemLevel: 18, damage: 1, toughness: -1),
+            piece("worn-down", slot: "helm", itemLevel: 9, damage: -1, toughness: 0, equipped: true),
+        ]
+
+        let upgrades = DeskRules.upgradeIDs(pieces)
+        let salvage = DeskRules.salvageIDs(pieces)
+        XCTAssertEqual(upgrades, ["melee-a", "chest-a"])
+        XCTAssertFalse(upgrades.contains("melee-low"))
+        XCTAssertFalse(upgrades.contains("melee-z"))
+        XCTAssertFalse(upgrades.contains("helm-mixed"))
+        XCTAssertFalse(upgrades.contains("worn"))
+        XCTAssertFalse(salvage.contains("unique-down"))
+        XCTAssertFalse(salvage.contains("locked-down"))
+        XCTAssertFalse(salvage.contains("favorite-down"))
+        XCTAssertFalse(salvage.contains("worn-down"))
+        XCTAssertEqual(salvage, ["common-down"])
+        XCTAssertFalse(upgrades.contains("mixed"))
+        XCTAssertFalse(salvage.contains("mixed"))
+        XCTAssertFalse(salvage.contains("helm-mixed"))
     }
 }

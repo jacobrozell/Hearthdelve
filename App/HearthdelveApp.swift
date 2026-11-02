@@ -30,6 +30,9 @@ enum HearthPlace {
     case cottage
     case library
     case stash
+    case apothecary
+    case map
+    case desk
     case rift
 }
 
@@ -41,6 +44,21 @@ struct GateForm: Equatable {
     var band: String
     var blocked: Bool
     var mossyNote: Bool
+}
+
+struct AwayReport: Equatable {
+    var title: String
+    var reward: String?
+    var note: String?
+    var lines: [LootLine]
+}
+
+private struct HeldSalvage {
+    var items: [ItemSave]
+    var dust: Double
+    var shards: Double
+    var embers: Double
+    var signatures: [String]
 }
 
 /// Owns the sim and feeds the scene at 20 Hz. At 2× and 4× each wall tick runs 2 or 4 sim ticks.
@@ -58,6 +76,7 @@ final class RiftDriver {
     private var speed = SimSpeed.x1
     private var paused = false
     private var loop: Task<Void, Never>?
+    private var loopToken = 0
     private var fellWall: ContinuousClock.Instant?
     private var savedThisRun = false
     private var tacticUntil: UInt64 = 0
@@ -81,10 +100,21 @@ final class RiftDriver {
     var glance = CGPoint.zero
     var panCursor = CGSize.zero
     var pendingSalvage: String?
+    var pendingBulk: String?
+    var bagFilter = BagFilter.all
+    private var freshIDs: Set<String> = []
+    private var held: HeldSalvage?
     var smithNote: String?
     var stashNote: String?
     var cottageName = ""
     var cottageDepth = 0
+    var doorLocked = false
+    var doorDetail: String?
+    var smithFocus: String?
+    var expeditionDepth = 1
+    var expeditionTiming = false
+    var expeditionNote: String?
+    var away: AwayReport?
 
     init() {
         let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -135,8 +165,12 @@ final class RiftDriver {
         shownRoom = run.room.id
         place = jumping ? .rift : .village
         chosenDepth = max(1, depthArg > 0 ? depthArg : save.bestDepth)
+        speed = SimSpeed(rawValue: RiftPace.clamp(save.gameplay.riftSpeed)) ?? .x1
         hud.homeTitle = jumping ? "New run" : "Village"
         hud.leaveTitle = jumping ? "New run" : "Leave"
+        hud.potionNote = PotionFacts.sentence(
+            healPercent: potionHealPercent, charges: potionChargeCount, cooldown: potionCooldownSeconds
+        )
         hamlet = builtHamlet()
         village.show(hamlet)
         glance = village.cameraPoint
@@ -147,21 +181,27 @@ final class RiftDriver {
             scene.load(room: worn.room)
             shownRoom = worn.room.id
         }
+        collectExpedition()
     }
 
     func start() {
         guard loop == nil else { return }
+        loopToken += 1
+        let token = loopToken
+        let pace = speed
         loop = Task { [weak self] in
-            await self?.run()
+            await self?.sim.enqueue(.setSpeed(pace))
+            await self?.run(token: token)
         }
     }
 
-    private func run() async {
+    private func run(token: Int) async {
         let clock = ContinuousClock()
         var deadline = clock.now
-        while Task.isCancelled == false {
+        while Task.isCancelled == false, loopToken == token {
             deadline += .milliseconds(50)
             let snapshot = await sim.advance(ticks: paused ? 1 : speed.rawValue)
+            guard loopToken == token else { return }
             show(snapshot)
             if clock.now > deadline + .milliseconds(250) {
                 deadline = clock.now
@@ -275,13 +315,19 @@ final class RiftDriver {
     }
 
     func cycleSpeed() {
-        speed = switch speed {
-        case .x1: .x2
-        case .x2: .x4
-        case .x4: .x1
-        }
-        let next = speed
-        Task { await sim.enqueue(.setSpeed(next)) }
+        let next = RiftPace.next(save.gameplay.riftSpeed)
+        save.gameplay.riftSpeed = next
+        speed = SimSpeed(rawValue: next) ?? .x1
+        saveGame()
+        let pace = speed
+        Task { await sim.enqueue(.setSpeed(pace)) }
+    }
+
+    func noteScene(_ phase: ScenePhase) {
+        if phase == .background { saveGame() }
+        if phase == .active { collectExpedition() }
+        guard phase != .active, place == .rift, paused == false, hud.down == false, hud.settled == false else { return }
+        togglePause()
     }
 
     func togglePause() {
@@ -299,6 +345,7 @@ final class RiftDriver {
         village.centerOnWell()
         glance = village.cameraPoint
         place = .village
+        loopToken += 1
         loop?.cancel()
         loop = nil
         paused = false
@@ -317,6 +364,12 @@ final class RiftDriver {
         hud.reward = nil
         hud.enraged = false
         hud.paused = false
+        hud.retryTitle = nil
+        hud.pushTitle = nil
+        hud.equipUpgradesTitle = nil
+        hud.salvageDownsTitle = nil
+        hud.homeTitle = "Village"
+        collectExpedition()
     }
 
     func openGate() {
@@ -331,7 +384,10 @@ final class RiftDriver {
     func openBag() { place = .bag }
 
     func closeOverlay() {
+        if place == .bag { freshIDs.removeAll() }
         pendingSalvage = nil
+        pendingBulk = nil
+        held = nil
         place = .village
     }
 
@@ -359,14 +415,16 @@ final class RiftDriver {
         case "well":
             openGate()
         case "blacksmith":
-            pendingSalvage = nil
-            smithNote = nil
-            place = .smith
+            openBench()
         case "library":
             openOrLocked(id, unlocked: .library)
         case "stash_house":
             stashNote = nil
             openOrLocked(id, unlocked: .stash)
+        case "apothecary":
+            openApothecary()
+        case "map_room":
+            openMap()
         default:
             openOrLocked(id, unlocked: nil)
         }
@@ -375,27 +433,68 @@ final class RiftDriver {
     private func openOrLocked(_ id: String, unlocked: HearthPlace?) {
         guard let building = hamlet.buildings.first(where: { $0.id == id }) else { return }
         if let depth = building.unlockDepth, frontier < depth {
-            cottageName = building.name
-            cottageDepth = depth
-            place = .cottage
+            showDoor(name: building.name, depth: depth)
             return
         }
         if let unlocked {
+            doorLocked = false
             place = unlocked
             return
         }
-        cottageName = building.name
-        cottageDepth = building.unlockDepth ?? 2
-        place = .cottage
+        showDoor(name: building.name, depth: building.unlockDepth ?? 2)
+    }
+
+    func showDoor(name: String, depth: Int, detail: String? = nil) {
+        cottageName = name
+        cottageDepth = depth
+        doorDetail = detail
+        doorLocked = true
+        place = .village
+    }
+
+    func closeDoor() {
+        doorLocked = false
+        doorDetail = nil
+    }
+
+    func openApothecary() {
+        guard let building = hamlet.buildings.first(where: { $0.id == "apothecary" }) else { return }
+        if let depth = building.unlockDepth, frontier < depth {
+            showDoor(name: building.name, depth: depth)
+            return
+        }
+        showDoor(
+            name: building.name, depth: building.unlockDepth ?? 2,
+            detail: PotionFacts.sentence(healPercent: potionHealPercent, charges: potionChargeCount, cooldown: potionCooldownSeconds)
+        )
+    }
+
+    func openBench() {
+        smithFocus = nil
+        pendingSalvage = nil
+        smithNote = nil
+        place = .smith
+    }
+
+    func openPiece(_ id: String) {
+        smithFocus = id
+        pendingSalvage = nil
+        smithNote = nil
+        place = .smith
     }
 
     func salvage(_ id: String) {
         guard let item = save.inventory.bag.first(where: { $0.id == id }) else { return }
-        switch SmithRules.salvage(rarity: item.rarity, signature: item.signature, equipped: wearing(item.id, save.loadouts.first), confirmed: false, tuning: smithTuning) {
+        switch SmithRules.salvage(
+            rarity: item.rarity, signature: item.signature, equipped: wearing(item.id, save.loadouts.first),
+            confirmed: false, tuning: smithTuning, locked: item.locked, favorite: item.favorite
+        ) {
         case .needsConfirmation:
             pendingSalvage = id
         case .granted(let yield):
             applySalvage(yield, id: id)
+        case .refused("kept"):
+            smithNote = SmithRules.keptPiece
         case .refused:
             break
         }
@@ -407,7 +506,10 @@ final class RiftDriver {
             return
         }
         pendingSalvage = nil
-        if case .granted(let yield) = SmithRules.salvage(rarity: item.rarity, signature: item.signature, equipped: wearing(id, save.loadouts.first), confirmed: true, tuning: smithTuning) {
+        if case .granted(let yield) = SmithRules.salvage(
+            rarity: item.rarity, signature: item.signature, equipped: wearing(id, save.loadouts.first),
+            confirmed: true, tuning: smithTuning, locked: item.locked, favorite: item.favorite
+        ) {
             applySalvage(yield, id: id)
         }
     }
@@ -452,7 +554,7 @@ final class RiftDriver {
                 id: item.id, text: "\(piece.rarityName) \(piece.name) \(piece.itemLevel)",
                 slot: piece.slot, slotName: GearSlots.name(piece.slot),
                 damageArrow: marks.0, toughnessArrow: marks.1, equipped: equipped,
-                canSalvage: equipped == false,
+                canSalvage: equipped == false && item.locked == false && item.favorite == false,
                 canRaise: item.itemLevel < SmithRules.cap(bestDepth: best) && afford,
                 raiseCaption: caption,
                 affixes: affixes,
@@ -460,9 +562,10 @@ final class RiftDriver {
                 rerollCaption: SmithRules.rerollCaption(rarity: item.rarity, times: item.rerolls, tuning: tuning) ?? "",
                 canTransmute: canTransmute,
                 transmuteCaption: item.rarity == "unique" ? SmithRules.transmuteCaption(tuning: tuning) : "",
-                signature: signatureSentence(item)
+                signature: signatureSentence(item),
+                isNew: freshIDs.contains(item.id), locked: item.locked, favorite: item.favorite
             )
-        }
+        }.sorted(by: rowOrder)
     }
 
     func craftCaption() -> String {
@@ -624,18 +727,108 @@ final class RiftDriver {
     func beginRift() {
         let form = gateForm()
         guard form.blocked == false else { return }
-        mode = form.deepRift ? .deepRift : .delve
-        chosenDepth = form.depth
+        launch(depth: form.depth, deep: form.deepRift)
+    }
+
+    func retryRift() {
+        guard jumpIn == false else {
+            newRun()
+            return
+        }
+        launch(depth: chosenDepth, deep: mode == .deepRift)
+    }
+
+    func pushRift() {
+        guard let next = RiftRepeat.pushDepth(fought: chosenDepth, best: frontier, deep: mode == .deepRift) else { return }
+        launch(depth: next, deep: mode == .deepRift)
+    }
+
+    func repeatLast() {
+        guard againTitle != nil else { return }
+        launch(depth: min(save.gameplay.lastDepth, frontier), deep: save.gameplay.lastDeep)
+    }
+
+    var pushBestTitle: String? {
+        guard DepthRules.deepRiftAllowed(depth: frontier, best: frontier) else { return nil }
+        return "Deep Rift \(frontier)"
+    }
+
+    func pushBest() {
+        launch(depth: frontier, deep: true)
+    }
+
+    func equipUpgrades() {
+        for id in DeskRules.upgradeIDs(resultDeskPieces()) {
+            equip(id)
+        }
+        refreshDeskTitles()
+    }
+
+    func salvageDowns() {
+        let ids = DeskRules.salvageIDs(resultDeskPieces())
+        var taken: [ItemSave] = []
+        var dust = 0.0
+        var shards = 0.0
+        var embers = 0.0
+        var signatures: [String] = []
+        for id in ids {
+            guard let item = save.inventory.bag.first(where: { $0.id == id }) else { continue }
+            guard case .granted(let yield) = SmithRules.salvage(
+                rarity: item.rarity, signature: item.signature, equipped: wearing(item.id, save.loadouts.first),
+                confirmed: false, tuning: smithTuning, locked: item.locked, favorite: item.favorite
+            ) else { continue }
+            taken.append(item)
+            dust += yield.dust
+            shards += yield.shards
+            embers += yield.embers
+            if let signature = yield.codexSignature, save.codex.signatures.contains(signature) == false {
+                signatures.append(signature)
+            }
+            save.inventory.bag.removeAll { $0.id == id }
+            save.inventory.dust += yield.dust
+            save.inventory.shards += yield.shards
+            save.inventory.embers += yield.embers
+            SmithRules.record(signature: yield.codexSignature, codex: &save.codex.signatures)
+        }
+        guard taken.isEmpty == false else { return }
+        held = HeldSalvage(items: taken, dust: dust, shards: shards, embers: embers, signatures: signatures)
+        hud.lootLines.removeAll { ids.contains($0.id) }
+        refreshDeskTitles()
+        saveGame()
+    }
+
+    var againTitle: String? {
+        guard save.gameplay.lastDepth >= 1 else { return nil }
+        let depth = min(save.gameplay.lastDepth, frontier)
+        let deep = save.gameplay.lastDeep
+        let allowed = deep
+            ? DepthRules.deepRiftAllowed(depth: depth, best: frontier)
+            : DepthRules.delveAllowed(depth: depth, best: frontier)
+        guard allowed else { return nil }
+        return RiftRepeat.againTitle(depth: depth, deep: deep)
+    }
+
+    private func launch(depth: Int, deep: Bool) {
+        let best = frontier
+        let depth = min(best, max(1, depth))
+        let allowed = deep
+            ? DepthRules.deepRiftAllowed(depth: depth, best: best)
+            : DepthRules.delveAllowed(depth: depth, best: best)
+        guard allowed else { return }
+        mode = deep ? .deepRift : .delve
+        chosenDepth = depth
+        deepRift = deep
         useSavedDepth = true
+        save.gameplay.lastDepth = depth
+        save.gameplay.lastDeep = deep
         let nextSeed = UInt64(max(1, save.runSeed))
         save.runSeed = Int(nextSeed) + 1
         saveGame()
         seed = nextSeed
         let nextSetup = prepared(base, seed: nextSeed)
         setup = nextSetup
-        sim = RiftActor(seed: nextSeed, setup: nextSetup)
         paused = false
-        speed = .x1
+        speed = SimSpeed(rawValue: RiftPace.clamp(save.gameplay.riftSpeed)) ?? .x1
         fellWall = nil
         savedThisRun = false
         acceptedLoot = false
@@ -651,9 +844,21 @@ final class RiftDriver {
         hud.reward = nil
         hud.enraged = false
         hud.paused = false
+        hud.retryTitle = nil
+        hud.pushTitle = nil
+        hud.equipUpgradesTitle = nil
+        hud.salvageDownsTitle = nil
+        hud.homeTitle = "Village"
+        hud.potionNote = PotionFacts.sentence(
+            healPercent: potionHealPercent, charges: potionChargeCount, cooldown: potionCooldownSeconds
+        )
         shownRoom = ""
         scene.load(room: nextSetup.room)
         village.isPaused = true
+        loopToken += 1
+        loop?.cancel()
+        loop = nil
+        sim = RiftActor(seed: nextSeed, setup: nextSetup)
         place = .rift
         start()
     }
@@ -688,7 +893,18 @@ final class RiftDriver {
         }
     }
 
+    var bagIsEmpty: Bool { save.inventory.bag.isEmpty }
+    var bagCount: Int { save.inventory.bag.count }
+
+    func chooseBagFilter(_ id: String) {
+        bagFilter = BagFilter(rawValue: id) ?? .all
+    }
+
     func bagLines() -> [LootLine] {
+        everyBagLine().filter { bagFilter.includes(damage: $0.damageArrow, toughness: $0.toughnessArrow, equipped: $0.equipped) }
+    }
+
+    private func everyBagLine() -> [LootLine] {
         let loadout = save.loadouts.first
         return save.inventory.bag.map { item in
             let piece = asLoot(item)
@@ -697,9 +913,23 @@ final class RiftDriver {
                 id: item.id, text: "\(piece.rarityName) \(piece.name) \(piece.itemLevel)",
                 slot: piece.slot, slotName: GearSlots.name(piece.slot),
                 damageArrow: marks.0, toughnessArrow: marks.1, equipped: wearing(item.id, loadout),
-                details: itemDetails(item)
+                details: itemDetails(item), isNew: freshIDs.contains(item.id), locked: item.locked, favorite: item.favorite
             )
-        }
+        }.sorted(by: rowOrder)
+    }
+
+    private func rowOrder(_ left: LootLine, _ right: LootLine) -> Bool {
+        BagOrder.before(
+            (left.slot, left.damageArrow, left.toughnessArrow, left.equipped, left.id),
+            (right.slot, right.damageArrow, right.toughnessArrow, right.equipped, right.id)
+        )
+    }
+
+    private func rowOrder(_ left: SmithLine, _ right: SmithLine) -> Bool {
+        BagOrder.before(
+            (left.slot, left.damageArrow, left.toughnessArrow, left.canSalvage, left.id),
+            (right.slot, right.damageArrow, right.toughnessArrow, right.canSalvage, right.id)
+        )
     }
 
     func newRun() {
@@ -741,6 +971,7 @@ final class RiftDriver {
         save.loadouts[0] = loadout
         saveGame()
         refreshLootLines(loadout)
+        if hud.settled || hud.down { refreshDeskTitles() }
     }
 
     func saveGame() {
@@ -774,51 +1005,396 @@ final class RiftDriver {
     var salvageCommons: Bool { save.gameplay.lootRules.contains(SmithRules.salvageCommon) }
     var salvageRares: Bool { save.gameplay.lootRules.contains(SmithRules.salvageRare) }
 
-    func toggleSalvageCommons() { toggleSalvage(SmithRules.salvageCommon) }
-    func toggleSalvageRares() { toggleSalvage(SmithRules.salvageRare) }
+    func toggleSalvageCommons() { stageSalvage(SmithRules.salvageCommon) }
+    func toggleSalvageRares() { stageSalvage(SmithRules.salvageRare) }
 
-    private func toggleSalvage(_ token: String) {
-        if let index = save.gameplay.lootRules.firstIndex(of: token) {
-            save.gameplay.lootRules.remove(at: index)
-        } else {
+    var salvagePreview: String? {
+        SmithRules.preview(items: salvageCandidates(), rules: save.gameplay.lootRules, tuning: smithTuning).sentence
+    }
+
+    var undoTitle: String? { held == nil ? nil : "Undo salvage" }
+
+    var bulkSentence: String? {
+        guard let token = pendingBulk else { return nil }
+        var rules = save.gameplay.lootRules
+        if rules.contains(token) == false { rules.append(token) }
+        return SmithRules.preview(items: salvageCandidates(), rules: rules, tuning: smithTuning).sentence
+    }
+
+    func confirmBulk() {
+        guard let token = pendingBulk else { return }
+        pendingBulk = nil
+        if save.gameplay.lootRules.contains(token) == false {
             save.gameplay.lootRules.append(token)
-            _ = runAutoSalvage()
         }
+        _ = runAutoSalvage(remember: true)
         saveGame()
     }
 
-    @discardableResult
-    private func runAutoSalvage() -> (commons: Int, rares: Int) {
+    func cancelBulk() {
+        pendingBulk = nil
+    }
+
+    func undoSalvage() {
+        guard let held else { return }
+        if save.inventory.dust + 0.000_001 < held.dust
+            || save.inventory.shards + 0.000_001 < held.shards
+            || save.inventory.embers + 0.000_001 < held.embers {
+            smithNote = SmithRules.materialsSpent
+            return
+        }
+        if save.inventory.bag.count + held.items.count > InventorySave.bagCapacity {
+            smithNote = StashRules.bagFull
+            return
+        }
+        save.inventory.dust -= held.dust
+        save.inventory.shards -= held.shards
+        save.inventory.embers -= held.embers
+        save.inventory.bag.append(contentsOf: held.items)
+        for signature in held.signatures {
+            if let index = save.codex.signatures.lastIndex(of: signature) {
+                save.codex.signatures.remove(at: index)
+            }
+        }
+        self.held = nil
+        smithNote = nil
+        saveGame()
+    }
+
+    func toggleLock(_ id: String) { toggleMark(id, lock: true) }
+    func toggleFavorite(_ id: String) { toggleMark(id, lock: false) }
+
+    private func stageSalvage(_ token: String) {
+        if let index = save.gameplay.lootRules.firstIndex(of: token) {
+            save.gameplay.lootRules.remove(at: index)
+            if pendingBulk == token { pendingBulk = nil }
+            saveGame()
+            return
+        }
+        var rules = save.gameplay.lootRules
+        rules.append(token)
+        let preview = SmithRules.preview(items: salvageCandidates(), rules: rules, tuning: smithTuning)
+        if preview.commons + preview.rares == 0 {
+            save.gameplay.lootRules.append(token)
+            saveGame()
+            return
+        }
+        pendingBulk = token
+    }
+
+    private func toggleMark(_ id: String, lock: Bool) {
+        guard let index = save.inventory.bag.firstIndex(where: { $0.id == id }) else { return }
+        if lock {
+            save.inventory.bag[index].locked.toggle()
+        } else {
+            save.inventory.bag[index].favorite.toggle()
+        }
+        smithNote = nil
+        saveGame()
+    }
+
+    private func salvageCandidates() -> [SmithRules.SalvageCandidate] {
         let loadout = save.loadouts.first
-        let candidates = save.inventory.bag.map { item in
+        return save.inventory.bag.map { item in
             SmithRules.SalvageCandidate(
                 id: item.id, rarity: item.rarity, signature: item.signature,
                 equipped: wearing(item.id, loadout), locked: item.locked, favorite: item.favorite
             )
         }
-        let picks = SmithRules.autoSalvage(items: candidates, rules: save.gameplay.lootRules, tuning: smithTuning)
+    }
+
+    @discardableResult
+    private func runAutoSalvage(remember: Bool) -> (commons: Int, rares: Int) {
+        let picks = SmithRules.autoSalvage(items: salvageCandidates(), rules: save.gameplay.lootRules, tuning: smithTuning)
         var commons = 0
         var rares = 0
+        var taken: [ItemSave] = []
+        var dust = 0.0
+        var shards = 0.0
+        var embers = 0.0
+        var signatures: [String] = []
         for pick in picks {
             guard let item = save.inventory.bag.first(where: { $0.id == pick.id }) else { continue }
             if item.rarity == "rare" { rares += 1 } else { commons += 1 }
+            taken.append(item)
+            dust += pick.yield.dust
+            shards += pick.yield.shards
+            embers += pick.yield.embers
+            if let signature = pick.yield.codexSignature, save.codex.signatures.contains(signature) == false {
+                signatures.append(signature)
+            }
             save.inventory.bag.removeAll { $0.id == pick.id }
             save.inventory.dust += pick.yield.dust
             save.inventory.shards += pick.yield.shards
             save.inventory.embers += pick.yield.embers
             SmithRules.record(signature: pick.yield.codexSignature, codex: &save.codex.signatures)
         }
+        if remember, taken.isEmpty == false {
+            held = HeldSalvage(items: taken, dust: dust, shards: shards, embers: embers, signatures: signatures)
+        }
         return (commons, rares)
     }
 
-    private func prepared(_ bare: RoomSetup, seed: UInt64) -> RoomSetup {
+    func openMap() {
+        guard let building = hamlet.buildings.first(where: { $0.id == "map_room" }) else { return }
+        if let depth = building.unlockDepth, frontier < depth {
+            showDoor(name: building.name, depth: depth)
+            return
+        }
+        if save.expeditions.depth == nil {
+            expeditionDepth = ExpeditionRules.defaultDepth(best: frontier)
+        } else if let depth = save.expeditions.depth {
+            expeditionDepth = depth
+        }
+        expeditionNote = nil
+        place = .map
+    }
+
+    func stepExpedition(_ delta: Int) {
+        guard save.expeditions.startedAt == nil, expeditionTiming == false else { return }
+        expeditionDepth = min(frontier, max(1, expeditionDepth + delta))
+    }
+
+    func sendExpedition() {
+        guard expeditionTiming == false, save.expeditions.startedAt == nil else { return }
+        guard ExpeditionRules.canSend(expeditionBand(expeditionDepth)) else { return }
+        expeditionTiming = true
+        expeditionNote = "Timing this Depth…"
+        let depth = expeditionDepth
+        Task { await self.timeAndSend(depth) }
+    }
+
+    var potionHealPercent: Int {
+        Int(((catalog?.tuning.room.potionHeal ?? CellarFight.tuning.room.potionHeal) * 100).rounded())
+    }
+
+    var potionChargeCount: Int {
+        catalog?.tuning.room.potionCharges ?? CellarFight.tuning.room.potionCharges
+    }
+
+    var potionCooldownSeconds: Int {
+        Int((catalog?.tuning.room.potionCooldown ?? CellarFight.tuning.room.potionCooldown).rounded())
+    }
+
+    func expeditionBandLabel() -> String {
+        expeditionBand(expeditionDepth).label
+    }
+
+    var expeditionStepsLocked: Bool {
+        expeditionTiming || save.expeditions.startedAt != nil
+    }
+
+    func expeditionCanSend() -> Bool {
+        save.expeditions.startedAt == nil && expeditionTiming == false && ExpeditionRules.canSend(expeditionBand(expeditionDepth))
+    }
+
+    func expeditionNoteLine() -> String? {
+        if let expeditionNote { return expeditionNote }
+        if save.expeditions.startedAt != nil { return nil }
+        if ExpeditionRules.canSend(expeditionBand(expeditionDepth)) == false {
+            return "Too hard to send. Easy or Fair only."
+        }
+        return nil
+    }
+
+    func expeditionStatus() -> String? {
+        guard let depth = save.expeditions.depth, let mean = save.expeditions.meanClearSeconds, let started = save.expeditions.startedAt else { return nil }
+        let away = ExpeditionRules.elapsed(leftAt: started, now: Date().timeIntervalSince1970)
+        let left = max(0, ExpeditionRules.capSeconds - away)
+        return "Out at Depth \(depth). About \(ExpeditionRules.duration(mean)) a rift. \(ExpeditionRules.duration(left)) left."
+    }
+
+    func dismissAway() {
+        away = nil
+    }
+
+    private func expeditionBand(_ depth: Int) -> DifficultyBand {
+        let p0 = catalog?.tuning.combat.p0 ?? 10
+        return BuildForecast.band(depth: depth, weapons: forecastWeapons(), p0: p0)
+    }
+
+    private func loadoutToken() -> String {
+        guard let loadout = save.loadouts.first else { return "" }
+        let ids = [loadout.melee, loadout.ranged, loadout.relics.first]
+            + ["helm", "chest", "legs", "boots"].map { loadout.armor[$0] }
+        return ids.compactMap { $0 }.sorted().joined(separator: ",")
+    }
+
+    private func timeAndSend(_ depth: Int) async {
+        var runs: [ClearTiming] = []
+        let seedBase = UInt64(max(1, save.runSeed))
+        for index in 0..<ExpeditionRules.sampleCount {
+            let seed = seedBase &+ UInt64(index) &+ 17
+            let setup = prepared(base, seed: seed, delveAt: depth)
+            let actor = RiftActor(seed: seed, setup: setup)
+            runs.append(await actor.untilDone(tickCap: 20 * 60 * 12))
+        }
+        expeditionTiming = false
+        guard let sample = ExpeditionRules.sample(runs) else {
+            expeditionNote = "That Depth did not clear."
+            return
+        }
+        save.expeditions = ExpeditionSave(
+            depth: depth,
+            startedAt: Date().timeIntervalSince1970,
+            meanClearSeconds: sample.seconds,
+            loadout: loadoutToken(),
+            normalKills: sample.normalKills,
+            eliteKills: sample.eliteKills
+        )
+        expeditionNote = "Sent. About \(ExpeditionRules.duration(sample.seconds)) a rift."
+        saveGame()
+    }
+
+    func collectExpedition(now: Double = Date().timeIntervalSince1970) {
+        guard place != .rift else { return }
+        guard let started = save.expeditions.startedAt,
+              let mean = save.expeditions.meanClearSeconds, mean > 0,
+              let depth = save.expeditions.depth else { return }
+        let awaySeconds = ExpeditionRules.elapsed(leftAt: started, now: now)
+        let token = save.expeditions.loadout
+        let stillFair = (token == nil || token == loadoutToken()) && ExpeditionRules.canSend(expeditionBand(depth))
+        let credited = ExpeditionRules.creditedAway(
+            away: awaySeconds, cap: ExpeditionRules.capSeconds, mean: mean, stillFair: stillFair
+        )
+        let count = ExpeditionRules.grantedRifts(
+            ExpeditionRules.riftCount(away: credited, cap: ExpeditionRules.capSeconds, mean: mean)
+        )
+        let early = stillFair == false
+        let finished = count > 0 || early || awaySeconds >= ExpeditionRules.capSeconds
+        guard finished else { return }
+        let normals = save.expeditions.normalKills
+        let elites = save.expeditions.eliteKills
+        save.expeditions = ExpeditionSave(depth: nil, startedAt: nil, meanClearSeconds: nil)
+        let report = payExpedition(depth: depth, count: count, normals: normals, elites: elites, early: early)
+        presentDesk(report)
+        saveGame()
+    }
+
+    private func presentDesk(_ report: AwayReport) {
+        hud.resultMessage = report.title
+        hud.reward = report.reward
+        hud.lootNote = report.note
+        hud.lootLines = report.lines
+        hud.lootEmpty = report.lines.isEmpty ? "None" : "None"
+        hud.depthDelta = nil
+        hud.down = false
+        hud.settled = true
+        hud.retryTitle = nil
+        hud.pushTitle = nil
+        hud.homeTitle = "Close"
+        refreshDeskTitles()
+        place = .desk
+    }
+
+    private func resultDeskPieces() -> [DeskPiece] {
+        let loadout = save.loadouts.first
+        return hud.lootLines.compactMap { line in
+            guard let item = save.inventory.bag.first(where: { $0.id == line.id }) else { return nil }
+            let loot = asLoot(item)
+            let marks = arrows(for: loot, against: loadout)
+            return DeskPiece(
+                id: item.id, slot: loot.slot, itemLevel: item.itemLevel,
+                damageArrow: marks.0, toughnessArrow: marks.1,
+                equipped: wearing(item.id, loadout), locked: item.locked, favorite: item.favorite, rarity: item.rarity
+            )
+        }
+    }
+
+    private func refreshDeskTitles() {
+        let pieces = resultDeskPieces()
+        hud.equipUpgradesTitle = DeskRules.upgradeIDs(pieces).isEmpty ? nil : "Equip upgrades"
+        hud.salvageDownsTitle = DeskRules.salvageIDs(pieces).isEmpty ? nil : "Salvage the rest"
+    }
+
+    private func payExpedition(depth: Int, count: Int, normals: Int, elites: Int, early: Bool) -> AwayReport {
+        let beforeLevel = save.hero.level
+        let beforeGold = save.inventory.gold
+        for _ in 0..<count { _ = grantProgress() }
+        let goldGain = Int((save.inventory.gold - beforeGold).rounded())
+        var found: [LootItem] = []
+        if count > 0, let catalog {
+            let p0 = catalog.tuning.combat.p0
+            let h0 = catalog.tuning.combat.h0
+            let startingPity = save.inventory.lootPity
+            var pity = startingPity
+            let seed = UInt64(max(1, save.runSeed))
+            for index in 0..<count {
+                var rng = RNGStreams(seed: seed &+ UInt64(index) &+ 41).loot
+                let table = catalog.lootTable(
+                    pity: pity, equipped: equipped(save.loadouts.first, catalog: catalog),
+                    idPrefix: "exp-\(seed)-\(index)"
+                )
+                let roll = LootRoller.roll(
+                    depth: depth, normalKills: normals, eliteKills: elites, guardian: true,
+                    table: table, rng: &rng, p0: p0, h0: h0
+                )
+                pity = roll.pity
+                found.append(contentsOf: roll.items)
+            }
+            save.runSeed += count
+            let room = InventorySave.bagCapacity - save.inventory.bag.count
+            let kept = LootRoller.admit(found, room: room)
+            for item in kept {
+                _ = save.inventory.store(stored(item))
+                freshIDs.insert(item.id)
+            }
+            save.inventory.lootPity = LootRoller.pity(starting: startingPity, kept: kept)
+        }
+        fillEmptySlots()
+        let broken = runAutoSalvage(remember: false)
+        let loadout = save.loadouts.first
+        let keptLines = found.filter { item in
+            save.inventory.bag.contains { $0.id == item.id } || wearing(item.id, loadout)
+        }.map { item in
+            let marks = arrows(for: item, against: loadout)
+            return LootLine(
+                id: item.id, text: "\(item.rarityName) \(item.name) \(item.itemLevel)",
+                slot: item.slot, slotName: GearSlots.name(item.slot),
+                damageArrow: marks.0, toughnessArrow: marks.1, equipped: wearing(item.id, loadout),
+                details: item.affixes.map { roll in
+                    let name = catalog?.itemAffixes.first { $0.id == roll.id }?.name ?? roll.stat
+                    return AffixFormat.line(name: name, value: roll.value)
+                },
+                isNew: true
+            )
+        }.sorted(by: rowOrder)
+        let title: String
+        if early {
+            title = "The Depth turned. You brought home what had finished."
+        } else if count == 0 {
+            title = "Eight hours. Nothing finished."
+        } else {
+            title = "\(count) \(count == 1 ? "Rift" : "Rifts") at Depth \(depth)."
+        }
+        let reward: String?
+        if count == 0 {
+            reward = nil
+        } else if save.hero.level == beforeLevel {
+            reward = "\(goldGain) Anula"
+        } else {
+            reward = "Level \(save.hero.level) · \(goldGain) Anula"
+        }
+        var notes: [String] = []
+        if let salvage = SmithRules.salvageNote(commons: broken.commons, rares: broken.rares) {
+            notes.append(salvage)
+        }
+        if found.isEmpty == false && keptLines.isEmpty {
+            notes.append("The bag is full.")
+        }
+        return AwayReport(title: title, reward: reward, note: notes.isEmpty ? nil : notes.joined(separator: " "), lines: keptLines)
+    }
+
+    private func prepared(_ bare: RoomSetup, seed: UInt64, delveAt: Int? = nil) -> RoomSetup {
         var next = bare
-        if useSavedDepth {
+        if let delveAt {
+            next.depth = min(max(1, delveAt), max(1, save.bestDepth))
+        } else if useSavedDepth {
             next.depth = min(max(1, chosenDepth), max(1, save.bestDepth))
         }
         guard var rift = next.rift else { return next }
         rift.floors = RiftFloors.count(for: seed)
-        rift.mode = mode
+        rift.mode = delveAt == nil ? mode : .delve
         rift.guardian = guardian
         if let catalog {
             let loadout = save.loadouts.first
@@ -839,6 +1415,7 @@ final class RiftDriver {
         hud.reward = grantProgress()
         guard setup.rift?.loot != nil else {
             saveGame()
+            showRepeat()
             return
         }
         let startingPity = save.inventory.lootPity
@@ -849,8 +1426,12 @@ final class RiftDriver {
         }
         save.inventory.lootPity = LootRoller.pity(starting: startingPity, kept: kept)
         fillEmptySlots()
-        let broken = runAutoSalvage()
+        let broken = runAutoSalvage(remember: false)
+        for item in kept where save.inventory.bag.contains(where: { $0.id == item.id }) {
+            freshIDs.insert(item.id)
+        }
         saveGame()
+        showRepeat()
         let loadout = save.loadouts.first
         let still = kept.filter { item in save.inventory.bag.contains { $0.id == item.id } }
         hud.lootNote = SmithRules.salvageNote(commons: broken.commons, rares: broken.rares)
@@ -864,9 +1445,21 @@ final class RiftDriver {
                 details: signatureLine(item.signature) + item.affixes.map { roll in
                     let name = catalog?.itemAffixes.first { $0.id == roll.id }?.name ?? roll.stat
                     return AffixFormat.line(name: name, value: roll.value)
-                }
+                },
+                isNew: true
             )
+        }.sorted(by: rowOrder)
+        refreshDeskTitles()
+    }
+
+    private func showRepeat() {
+        guard jumpIn == false else {
+            hud.retryTitle = nil
+            hud.pushTitle = nil
+            return
         }
+        hud.retryTitle = "Retry"
+        hud.pushTitle = RiftRepeat.pushTitle(fought: chosenDepth, best: frontier, deep: mode == .deepRift)
     }
 
     private func stored(_ item: LootItem) -> ItemSave {
@@ -1153,11 +1746,20 @@ final class RiftDriver {
     }
 
     private func applySalvage(_ yield: SalvageYield, id: String) {
+        guard let item = save.inventory.bag.first(where: { $0.id == id }) else { return }
+        let added: [String]
+        if let signature = yield.codexSignature, save.codex.signatures.contains(signature) == false {
+            added = [signature]
+        } else {
+            added = []
+        }
+        held = HeldSalvage(items: [item], dust: yield.dust, shards: yield.shards, embers: yield.embers, signatures: added)
         save.inventory.bag.removeAll { $0.id == id }
         save.inventory.dust += yield.dust
         save.inventory.shards += yield.shards
         save.inventory.embers += yield.embers
         SmithRules.record(signature: yield.codexSignature, codex: &save.codex.signatures)
+        smithNote = nil
         saveGame()
     }
 
@@ -1187,11 +1789,35 @@ struct RiftHost: View {
                             pause: driver.togglePause,
                             newRun: driver.returnHome,
                             saveRecording: { Task { await driver.saveRecording() } },
-                            equip: driver.equip
+                            equip: driver.equip,
+                            retry: driver.retryRift,
+                            push: driver.pushRift,
+                            equipUpgrades: driver.equipUpgrades,
+                            salvageDowns: driver.salvageDowns
                         ),
                         note: driver.note
                     )
                 }
+                .background(HearthPalette.ink)
+            }
+            if driver.place == .desk {
+                RoomHUD(
+                    state: driver.hud,
+                    actions: RoomActions(
+                        relic: { _ in },
+                        potion: {},
+                        speed: {},
+                        pause: {},
+                        newRun: driver.returnHome,
+                        saveRecording: {},
+                        equip: driver.equip,
+                        retry: {},
+                        push: {},
+                        equipUpgrades: driver.equipUpgrades,
+                        salvageDowns: driver.salvageDowns
+                    ),
+                    note: driver.note
+                )
                 .background(HearthPalette.ink)
             }
         }
@@ -1200,7 +1826,7 @@ struct RiftHost: View {
             if driver.place == .rift { driver.start() }
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .background { driver.saveGame() }
+            driver.noteScene(phase)
         }
     }
 
@@ -1243,14 +1869,24 @@ struct RiftHost: View {
                         )
                         .padding(.top, topSafeInset)
                         Spacer(minLength: 0).allowsHitTesting(false)
+                        HamletBar(
+                            farmTitle: driver.againTitle, pushTitle: driver.pushBestTitle,
+                            farm: driver.repeatLast, push: driver.pushBest, change: driver.openGate
+                        )
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 28)
                     }
                 }
                 if driver.place == .bag {
                     BagView(
-                        slots: driver.wornSlots(), stats: driver.heroStats(), lines: driver.bagLines(), count: driver.bagLines().count, capacity: InventorySave.bagCapacity,
+                        slots: driver.wornSlots(), stats: driver.heroStats(), lines: driver.bagLines(),
+                        count: driver.bagCount, capacity: InventorySave.bagCapacity, bagEmpty: driver.bagIsEmpty, filter: driver.bagFilter.rawValue,
                         salvageCommons: driver.salvageCommons, salvageRares: driver.salvageRares,
-                        close: driver.closeOverlay, equip: driver.equip,
-                        toggleCommons: driver.toggleSalvageCommons, toggleRares: driver.toggleSalvageRares
+                        salvagePreview: driver.salvagePreview, undoTitle: driver.undoTitle,
+                        close: driver.closeOverlay, equip: driver.equip, chooseFilter: driver.chooseBagFilter,
+                        toggleLock: driver.toggleLock, toggleFavorite: driver.toggleFavorite,
+                        toggleCommons: driver.toggleSalvageCommons, toggleRares: driver.toggleSalvageRares, undo: driver.undoSalvage,
+                        work: driver.openPiece, note: driver.smithNote
                     )
                 }
                 if driver.place == .gate {
@@ -1273,15 +1909,19 @@ struct RiftHost: View {
                 }
                 if driver.place == .smith {
                     SmithView(
-                        slots: driver.wornSlots(), stats: driver.heroStats(), salvageCommons: driver.salvageCommons, salvageRares: driver.salvageRares,
+                        slots: driver.wornSlots(), stats: driver.heroStats(),
+                        salvageCommons: driver.salvageCommons, salvageRares: driver.salvageRares,
+                        salvagePreview: driver.salvagePreview, undoTitle: driver.undoTitle,
                         gold: driver.goldAmount, dust: driver.dustAmount, shards: driver.shardAmount, embers: driver.emberAmount,
                         lines: driver.smithLines(), confirming: driver.pendingSalvage != nil,
-                        craftChoices: driver.craftChoices(), craftCaption: driver.craftCaption(), bagFull: driver.bagLines().count >= InventorySave.bagCapacity,
+                        craftChoices: driver.craftChoices(), craftCaption: driver.craftCaption(), bagFull: driver.bagCount >= InventorySave.bagCapacity,
                         note: driver.smithNote,
                         close: driver.closeOverlay, salvage: driver.salvage, confirmSalvage: driver.confirmSalvage,
                         cancelSalvage: driver.cancelSalvage, raise: driver.raiseItem, equip: driver.equip,
-                        toggleCommons: driver.toggleSalvageCommons, toggleRares: driver.toggleSalvageRares,
-                        reroll: driver.reroll, transmute: driver.transmute, craft: driver.craft
+                        toggleCommons: driver.toggleSalvageCommons, toggleRares: driver.toggleSalvageRares, undo: driver.undoSalvage,
+                        toggleLock: driver.toggleLock, toggleFavorite: driver.toggleFavorite,
+                        reroll: driver.reroll, transmute: driver.transmute, craft: driver.craft,
+                        focusID: driver.smithFocus, showsBag: driver.smithFocus == nil
                     )
                 }
                 if driver.place == .library {
@@ -1293,14 +1933,34 @@ struct RiftHost: View {
                 if driver.place == .stash {
                     StashView(
                         bag: driver.bagLines(), stash: driver.stashLines(),
-                        bagCount: driver.bagLines().count, bagCapacity: InventorySave.bagCapacity,
+                        bagCount: driver.bagCount, bagCapacity: InventorySave.bagCapacity,
                         stashCount: driver.stashLines().count, stashCapacity: InventorySave.stashCapacity,
                         note: driver.stashNote, close: driver.closeOverlay,
                         toStash: driver.moveToStash, toBag: driver.moveToBag
                     )
                 }
-                if driver.place == .cottage {
-                    LockedCottageView(name: driver.cottageName, depth: driver.cottageDepth, close: driver.closeOverlay)
+                if driver.doorLocked, driver.place == .village {
+                    ZStack {
+                        Color.black.opacity(0.45).ignoresSafeArea()
+                        LockedDoorNote(
+                            name: driver.cottageName, depth: driver.cottageDepth, detail: driver.doorDetail,
+                            close: driver.closeDoor
+                        )
+                        .padding(24)
+                    }
+                }
+                if driver.place == .map {
+                    MapRoomView(
+                        depth: driver.expeditionDepth, best: driver.frontier, band: driver.expeditionBandLabel(),
+                        canSend: driver.expeditionCanSend(), status: driver.expeditionStatus(),
+                        note: driver.expeditionNoteLine(), timing: driver.expeditionTiming,
+                        stepsLocked: driver.expeditionStepsLocked,
+                        lower: { driver.stepExpedition(-1) }, raise: { driver.stepExpedition(1) },
+                        send: driver.sendExpedition, close: driver.closeOverlay
+                    )
+                }
+                if let sentence = driver.bulkSentence {
+                    BulkSalvageAsk(sentence: sentence, confirm: driver.confirmBulk, cancel: driver.cancelBulk)
                 }
             }
             .onAppear { driver.syncVillage(viewSize: geo.size) }

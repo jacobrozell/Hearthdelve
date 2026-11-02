@@ -62,6 +62,11 @@ public struct RoomHUDState: Equatable, Sendable {
     public var reward: String?
     public var homeTitle = "New run"
     public var leaveTitle = "New run"
+    public var retryTitle: String?
+    public var pushTitle: String?
+    public var equipUpgradesTitle: String? = nil
+    public var salvageDownsTitle: String? = nil
+    public var potionNote: String = ""
 
     public init() {}
 }
@@ -74,10 +79,16 @@ public struct RoomActions {
     public var newRun: () -> Void
     public var saveRecording: () -> Void
     public var equip: (String) -> Void
+    public var retry: () -> Void
+    public var push: () -> Void
+    public var equipUpgrades: () -> Void
+    public var salvageDowns: () -> Void
 
     public init(
         relic: @escaping (Int) -> Void, potion: @escaping () -> Void, speed: @escaping () -> Void, pause: @escaping () -> Void,
-        newRun: @escaping () -> Void, saveRecording: @escaping () -> Void, equip: @escaping (String) -> Void
+        newRun: @escaping () -> Void, saveRecording: @escaping () -> Void, equip: @escaping (String) -> Void,
+        retry: @escaping () -> Void, push: @escaping () -> Void,
+        equipUpgrades: @escaping () -> Void = {}, salvageDowns: @escaping () -> Void = {}
     ) {
         self.relic = relic
         self.potion = potion
@@ -86,6 +97,10 @@ public struct RoomActions {
         self.newRun = newRun
         self.saveRecording = saveRecording
         self.equip = equip
+        self.retry = retry
+        self.push = push
+        self.equipUpgrades = equipUpgrades
+        self.salvageDowns = salvageDowns
     }
 }
 
@@ -98,8 +113,14 @@ public struct LootLine: Equatable, Sendable, Identifiable {
     public var toughnessArrow: Int
     public var equipped: Bool
     public var details: [String]
+    public var isNew: Bool
+    public var locked: Bool
+    public var favorite: Bool
 
-    public init(id: String, text: String, slot: String, slotName: String, damageArrow: Int, toughnessArrow: Int, equipped: Bool, details: [String]) {
+    public init(
+        id: String, text: String, slot: String, slotName: String, damageArrow: Int, toughnessArrow: Int,
+        equipped: Bool, details: [String], isNew: Bool = false, locked: Bool = false, favorite: Bool = false
+    ) {
         self.id = id
         self.text = text
         self.slot = slot
@@ -108,6 +129,9 @@ public struct LootLine: Equatable, Sendable, Identifiable {
         self.toughnessArrow = toughnessArrow
         self.equipped = equipped
         self.details = details
+        self.isNew = isNew
+        self.locked = locked
+        self.favorite = favorite
     }
 }
 
@@ -128,6 +152,7 @@ public struct RoomHUD: View {
     public var state: RoomHUDState
     public var actions: RoomActions
     public var note: String?
+    @State private var showPotionNote = false
 
     public init(state: RoomHUDState, actions: RoomActions, note: String? = nil) {
         self.state = state
@@ -149,14 +174,20 @@ public struct RoomHUD: View {
                     newRun: actions.newRun, save: actions.saveRecording, equip: actions.equip, note: note,
                     message: state.resultMessage ?? "You wake by the hearth. Everything you found came home with you.",
                     reward: state.reward,
-                    loot: state.lootLines, depthDelta: state.depthDelta, emptyTitle: state.lootEmpty, lootNote: state.lootNote, homeTitle: state.homeTitle
+                    loot: state.lootLines, depthDelta: state.depthDelta, emptyTitle: state.lootEmpty, lootNote: state.lootNote, homeTitle: state.homeTitle,
+                    retryTitle: state.retryTitle, pushTitle: state.pushTitle, retry: actions.retry, push: actions.push,
+                    equipUpgradesTitle: state.equipUpgradesTitle, equipUpgrades: actions.equipUpgrades,
+                    salvageDownsTitle: state.salvageDownsTitle, salvageDowns: actions.salvageDowns
                 )
             } else if state.settled {
                 ClearOverlay(
                     newRun: actions.newRun, save: actions.saveRecording, equip: actions.equip, note: note,
                     message: state.resultMessage ?? "The Guardian falls.",
                     reward: state.reward,
-                    loot: state.lootLines, depthDelta: state.depthDelta, emptyTitle: state.lootEmpty, lootNote: state.lootNote, homeTitle: state.homeTitle
+                    loot: state.lootLines, depthDelta: state.depthDelta, emptyTitle: state.lootEmpty, lootNote: state.lootNote, homeTitle: state.homeTitle,
+                    retryTitle: state.retryTitle, pushTitle: state.pushTitle, retry: actions.retry, push: actions.push,
+                    equipUpgradesTitle: state.equipUpgradesTitle, equipUpgrades: actions.equipUpgrades,
+                    salvageDownsTitle: state.salvageDownsTitle, salvageDowns: actions.salvageDowns
                 )
             } else if state.paused {
                 PauseOverlay(resume: actions.pause, newRun: actions.newRun, save: actions.saveRecording, note: note, leaveTitle: state.leaveTitle)
@@ -164,7 +195,7 @@ public struct RoomHUD: View {
         }
     }
 
-    /// Meter, Depth, and floor sit at the top and do not take taps. The Lantern arc is only there in a Deep Rift.
+    /// Depth and floor sit at the top and do not take taps. The Guardian meter shows while it is above zero. The Lantern arc is only there in a Deep Rift.
     private var top: some View {
         VStack(alignment: .leading, spacing: 4) {
             if let debug = state.debug {
@@ -188,7 +219,9 @@ public struct RoomHUD: View {
             }
             .font(HearthFont.pixel(16))
             .foregroundStyle(HearthPalette.parchment)
-            RiftMeterBar(value: state.meter)
+            if state.meter > 0 {
+                RiftMeterBar(value: state.meter)
+            }
             if state.enraged {
                 Text("Enraged")
                     .font(HearthFont.pixel(16))
@@ -214,19 +247,23 @@ public struct RoomHUD: View {
                     .allowsHitTesting(false)
                     .accessibilityLabel(tactic)
             }
-            HStack(alignment: .lastTextBaseline) {
-                Text("Wave \(state.wave)")
-                Spacer()
-                Text("\(state.kills) kills")
-            }
-            .font(HearthFont.pixel(16))
-            .foregroundStyle(HearthPalette.parchment.opacity(0.8))
-            .allowsHitTesting(false)
             HStack(spacing: 8) {
                 Meter(title: "HP", value: fraction(state.hp, state.maxHP), text: "\(Int(state.hp.rounded()))", tint: HearthPalette.grass, shield: fraction(state.shield, state.maxHP))
                 Meter(title: "Charge", value: fraction(state.souls, state.soulCap), text: "\(Int(state.souls.rounded()))", tint: HearthPalette.amber, shield: 0)
             }
             .allowsHitTesting(false)
+            if showPotionNote, state.potionNote.isEmpty == false {
+                Text(state.potionNote)
+                    .font(HearthFont.pixel(16))
+                    .foregroundStyle(HearthPalette.amber)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 3)
+                    .background(Capsule().fill(HearthPalette.ink.opacity(0.7)))
+                    .transition(.opacity)
+                    .allowsHitTesting(false)
+                    .accessibilityLabel(state.potionNote)
+            }
             HStack(spacing: 10) {
                 ForEach(Array(state.relics.enumerated()), id: \.offset) { slot, relic in
                     ThumbButton(
@@ -238,7 +275,11 @@ public struct RoomHUD: View {
                 ThumbButton(
                     title: "Pot", subtitle: "\(state.potionCharges)/\(state.potionMax)", cooldown: state.potionCooldown,
                     ready: state.potionCharges > 0 && state.potionCooldown == 0, size: 56, tint: HearthPalette.grass,
-                    label: "Potion, \(state.potionCharges) left", action: actions.potion
+                    label: "Potion, \(state.potionCharges) left", action: actions.potion,
+                    longPress: {
+                        guard state.potionNote.isEmpty == false else { return }
+                        showPotionNote.toggle()
+                    }
                 )
                 ThumbButton(title: "\(state.speed)×", subtitle: nil, cooldown: 0, ready: true, size: 44, tint: HearthPalette.parchment,
                             label: "Speed \(state.speed) times", action: actions.speed)
@@ -249,6 +290,10 @@ public struct RoomHUD: View {
         .padding(.horizontal, 14)
         .padding(.bottom, 10)
         .animation(.easeOut(duration: 0.2), value: state.tactic)
+        .animation(.easeOut(duration: 0.2), value: showPotionNote)
+        .onChange(of: state.potionNote) { _, note in
+            if note.isEmpty { showPotionNote = false }
+        }
     }
 
     private func fraction(_ value: Double, _ cap: Double) -> Double {
@@ -300,33 +345,66 @@ private struct ThumbButton: View {
     var tint: Color
     var label: String
     var action: () -> Void
+    var longPress: (() -> Void)? = nil
+    @State private var pressBegan: Date?
 
     var body: some View {
-        Button(action: action) {
-            ZStack {
-                Circle().fill(HearthPalette.ink.opacity(0.75))
-                Circle().stroke(tint.opacity(ready ? 1 : 0.35), lineWidth: 2)
-                if cooldown > 0 {
-                    Circle()
-                        .trim(from: 0, to: cooldown)
-                        .stroke(HearthPalette.parchment.opacity(0.85), style: StrokeStyle(lineWidth: 3, lineCap: .butt))
-                        .rotationEffect(.degrees(-90))
-                        .scaleEffect(x: -1)
-                }
-                VStack(spacing: -2) {
-                    Text(title).font(HearthFont.pixel(size > 50 ? 20 : 16))
-                    if let subtitle {
-                        Text(subtitle).font(HearthFont.pixel(12)).opacity(0.75)
-                    }
-                }
-                .foregroundStyle(tint.opacity(ready ? 1 : 0.5))
-            }
-            .frame(width: size, height: size)
-            .contentShape(Circle())
+        if let longPress {
+            Button(action: action) { face }
+                .buttonStyle(ThumbHoldStyle(longPress: longPress, pressBegan: $pressBegan))
+                .accessibilityLabel(label)
+                .accessibilityValue(ready ? "Ready" : "Not ready")
+                .accessibilityAction(named: "Potion note", longPress)
+        } else {
+            Button(action: action) { face }
+                .buttonStyle(.plain)
+                .accessibilityLabel(label)
+                .accessibilityValue(ready ? "Ready" : "Not ready")
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(label)
-        .accessibilityValue(ready ? "Ready" : "Not ready")
+    }
+
+    private var face: some View {
+        ZStack {
+            Circle().fill(HearthPalette.ink.opacity(0.75))
+            Circle().stroke(tint.opacity(ready ? 1 : 0.35), lineWidth: 2)
+            if cooldown > 0 {
+                Circle()
+                    .trim(from: 0, to: cooldown)
+                    .stroke(HearthPalette.parchment.opacity(0.85), style: StrokeStyle(lineWidth: 3, lineCap: .butt))
+                    .rotationEffect(.degrees(-90))
+                    .scaleEffect(x: -1)
+            }
+            VStack(spacing: -2) {
+                Text(title).font(HearthFont.pixel(size > 50 ? 20 : 16))
+                if let subtitle {
+                    Text(subtitle).font(HearthFont.pixel(12)).opacity(0.75)
+                }
+            }
+            .foregroundStyle(tint.opacity(ready ? 1 : 0.5))
+        }
+        .frame(width: size, height: size)
+        .contentShape(Circle())
+    }
+}
+
+/// A short press fires the button. Holding for half a second fires `longPress` and does not fire the tap.
+private struct ThumbHoldStyle: PrimitiveButtonStyle {
+    var longPress: () -> Void
+    @Binding var pressBegan: Date?
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .contentShape(Rectangle())
+            .onTapGesture {
+                let held = pressBegan.map { Date().timeIntervalSince($0) } ?? 0
+                pressBegan = nil
+                if held < 0.5 {
+                    configuration.trigger()
+                }
+            }
+            .onLongPressGesture(minimumDuration: 0.5, perform: longPress, onPressingChanged: { pressing in
+                if pressing { pressBegan = Date() }
+            })
     }
 }
 
@@ -444,7 +522,15 @@ private struct LootList: View {
                                 .accessibilityAddTraits(.isHeader)
                             ForEach(group.lines) { line in
                                 HStack(alignment: .top, spacing: 8) {
-                                    ItemFacts(title: line.text, details: line.details)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        if line.isNew {
+                                            Text("New")
+                                                .font(HearthFont.pixel(14))
+                                                .foregroundStyle(HearthPalette.amber)
+                                                .accessibilityLabel("New")
+                                        }
+                                        ItemFacts(title: line.text, details: line.details)
+                                    }
                                     if line.equipped == false {
                                         ScoreMark(arrow: line.damageArrow, name: "damage")
                                         ScoreMark(arrow: line.toughnessArrow, name: "toughness")
@@ -510,6 +596,14 @@ private struct DownOverlay: View {
     var emptyTitle: String
     var lootNote: String?
     var homeTitle: String
+    var retryTitle: String?
+    var pushTitle: String?
+    var retry: () -> Void
+    var push: () -> Void
+    var equipUpgradesTitle: String? = nil
+    var equipUpgrades: () -> Void = {}
+    var salvageDownsTitle: String? = nil
+    var salvageDowns: () -> Void = {}
 
     var body: some View {
         ZStack {
@@ -526,13 +620,12 @@ private struct DownOverlay: View {
                         .accessibilityLabel(reward)
                 }
                 LootList(lines: loot, depthDelta: depthDelta, emptyTitle: emptyTitle, note: lootNote, equip: equip)
-                PanelButton(title: homeTitle, action: newRun)
-                Button("Save this run", action: save)
-                    .font(HearthFont.pixel(16))
-                    .foregroundStyle(HearthPalette.amber)
-                if let note {
-                    Text(note).font(.caption2).foregroundStyle(HearthPalette.parchment.opacity(0.7))
-                }
+                ResultActions(
+                    homeTitle: homeTitle, home: newRun, retryTitle: retryTitle, retry: retry,
+                    pushTitle: pushTitle, push: push, save: save, note: note,
+                    equipUpgradesTitle: equipUpgradesTitle, equipUpgrades: equipUpgrades,
+                    salvageDownsTitle: salvageDownsTitle, salvageDowns: salvageDowns
+                )
             }
         }
     }
@@ -550,6 +643,14 @@ private struct ClearOverlay: View {
     var emptyTitle: String
     var lootNote: String?
     var homeTitle: String
+    var retryTitle: String?
+    var pushTitle: String?
+    var retry: () -> Void
+    var push: () -> Void
+    var equipUpgradesTitle: String? = nil
+    var equipUpgrades: () -> Void = {}
+    var salvageDownsTitle: String? = nil
+    var salvageDowns: () -> Void = {}
 
     var body: some View {
         ZStack {
@@ -566,14 +667,52 @@ private struct ClearOverlay: View {
                         .accessibilityLabel(reward)
                 }
                 LootList(lines: loot, depthDelta: depthDelta, emptyTitle: emptyTitle, note: lootNote, equip: equip)
-                PanelButton(title: homeTitle, action: newRun)
-                Button("Save this run", action: save)
-                    .font(HearthFont.pixel(16))
-                    .foregroundStyle(HearthPalette.amber)
-                if let note {
-                    Text(note).font(.caption2).foregroundStyle(HearthPalette.parchment.opacity(0.7))
-                }
+                ResultActions(
+                    homeTitle: homeTitle, home: newRun, retryTitle: retryTitle, retry: retry,
+                    pushTitle: pushTitle, push: push, save: save, note: note,
+                    equipUpgradesTitle: equipUpgradesTitle, equipUpgrades: equipUpgrades,
+                    salvageDownsTitle: salvageDownsTitle, salvageDowns: salvageDowns
+                )
             }
+        }
+    }
+}
+
+private struct ResultActions: View {
+    var homeTitle: String
+    var home: () -> Void
+    var retryTitle: String?
+    var retry: () -> Void
+    var pushTitle: String?
+    var push: () -> Void
+    var save: () -> Void
+    var note: String?
+    var equipUpgradesTitle: String? = nil
+    var equipUpgrades: () -> Void = {}
+    var salvageDownsTitle: String? = nil
+    var salvageDowns: () -> Void = {}
+
+    var body: some View {
+        if let equipUpgradesTitle {
+            PanelButton(title: equipUpgradesTitle, action: equipUpgrades)
+                .accessibilityLabel(equipUpgradesTitle)
+        }
+        if let salvageDownsTitle {
+            PanelButton(title: salvageDownsTitle, action: salvageDowns)
+                .accessibilityLabel(salvageDownsTitle)
+        }
+        if let retryTitle {
+            PanelButton(title: retryTitle, action: retry)
+        }
+        if let pushTitle {
+            PanelButton(title: pushTitle, action: push)
+        }
+        PanelButton(title: homeTitle, action: home)
+        Button("Save this run", action: save)
+            .font(HearthFont.pixel(16))
+            .foregroundStyle(HearthPalette.amber)
+        if let note {
+            Text(note).font(.caption2).foregroundStyle(HearthPalette.parchment.opacity(0.7))
         }
     }
 }

@@ -17,8 +17,8 @@ Each entry has:
 
 - **Meets** — cold launch, before the first Delve.
 - **Say** — "This is home. Pan it with a finger. The well starts a Delve. The Blacksmith takes the gear you do not want."
-- **Page** — The hamlet is the village. The well opens the gate. The Blacksmith is open from the start. Other cottages stay shut until best Depth reaches the number on the door, and the door says so. Coming home from a rift puts the camera back on the well. Level, Anula, Dust, Facets, and Echoes sit in the corner. The Bag button is there too.
-- **Later** — Wanderers, day and night, weather, and the moth are not in this build. Locked cottages name a Depth and do not open a system: Apothecary 2, Map Room 5, Inn 10, Chandlery 12, Reliquary 15, Garden 20, Trophy Hall 25, Relay Tower 40, Glyphwright 50. The Library (3) and the Stash House (8) do open once that Depth is reached.
+- **Page** — The hamlet is the village. The well opens the gate. A bar at the bottom is Farm, Push, and Change. Farm repeats the last Delve or Deep Rift. Push is a Deep Rift at best Depth. Change opens the gate. The Blacksmith lists the bag for salvage, and also crafts and transmutes. A locked cottage names its Depth on a card over the hamlet. Coming home from a rift puts the camera back on the well. Level, Anula, Dust, Facets, and Echoes sit in the corner. The Bag button is there too.
+- **Later** — Wanderers, day and night, weather, and the moth are not in this build. Locked cottages name a Depth and do not open a system: Inn 10, Chandlery 12, Reliquary 15, Garden 20, Trophy Hall 25, Relay Tower 40, Glyphwright 50. The Apothecary (2), the Library (3), the Map Room (5), and the Stash House (8) do open once that Depth is reached.
 
 ### The well
 
@@ -31,7 +31,7 @@ Each entry has:
 
 - **Meets** — the rift, under the hero.
 - **Say** — "You do not swing. The hero does. Tap a Relic to fire it early. The three rules at the Library fire them for you. Drink happens on its own when you are hurt."
-- **Page** — The hero shoots while the target is farther than 3 tiles and in sight, and swings once it is in melee reach. Speed is 1×, then 2× and 4×. The potion has 3 drinks and each one heals 55% of max HP. It will not fire while already full. The buttons are the worn Relic and the Ward. The line under a tactic is the same sentence the Library edits. The top of the screen shows the floor and, on a Guardian, the meter. Nothing up there is a button. The meter under the hero reads Charge. A clear or a death both pay Anula and experience and send the found gear home.
+- **Page** — The hero shoots while the target is farther than 3 tiles and in sight, and swings once it is in melee reach. Speed is 1×, then 2× and 4×, and the last choice is remembered. Leaving the app pauses the fight until Resume. The potion has 3 drinks and each one heals 55% of max HP. It will not fire while already full. A long-press on the potion says the heal, the charges, and the wait. The buttons are the worn Relic and the Ward. A tactic sentence shows only while that rule fires. The top of the screen shows the floor, and the meter only while a Guardian is up. Nothing up there is a button. The meter under the hero reads Charge. A clear or a death both pay Anula and experience and send the found gear home. The result can equip every upgrade and salvage every pure down, then offers Retry at the same Depth, and Push when the next Depth can start. Salvage from that card can be undone from the Bag.
 - **Later** — Three Relic buttons, Charms, and the Lantern arc on a Delve are spec, not this screen. This fight has the Relics the loadout equipped, starting from Ember Flask and Lantern Ward.
 
 ## Gear
@@ -40,8 +40,8 @@ Each entry has:
 
 - **Meets** — the result card, and again in the Bag.
 - **Say** — "The name is the rarity, the piece, and its item level. The lines under it are the rolls. An up arrow is better than what you are wearing in that slot. A down arrow is worse."
-- **Page** — Common has one roll. Rare and Unique have two. A Unique also has a signature sentence that always does the same thing for that named piece. The two arrows are damage and toughness against the piece in that slot. They are level when the new piece matches, and they stay off the piece you already have equipped. An empty slot fills itself with the strongest piece that fits. The bag holds 40. When it is full, the game says "The bag is full." and new drops wait.
-- **Later** — The spec's long-press compare, lock, favorite, and a single upgrade percent are not on the card yet. Locked and favorite already exist on the save and are skipped by auto-salvage.
+- **Page** — Common has one roll. Rare and Unique have two. A Unique also has a signature sentence that always does the same thing for that named piece. The two arrows are damage and toughness against the piece in that slot. They are level when the new piece matches, and they stay off the piece you already have equipped. An empty slot fills itself with the strongest piece that fits. The bag holds 40. When it is full, the game says "The bag is full." and new drops wait. New marks a drop until the Bag is closed. All, Upgrades, and Rest filter the list. Worn pieces sort first, then anything with an up arrow. Lock or Favorite keeps a piece out of salvage.
+- **Later** — The spec's long-press compare and a single upgrade percent are not on the card yet.
 
 ### You
 
@@ -55,15 +55,15 @@ Each entry has:
   | Ranged | The same, for the ranged weapon. |
   | Bonus HP | Max HP rolls on the four armor pieces, plus 8 for each level after 1. |
   | Armor | The armor rating from those same pieces. Incoming hits use it. |
-  | Crit | 5%. A crit deals half again as much. That bonus is not its own line. |
+  | Base crit | 5%. A crit deals half again as much. A Crit Chance roll does not change this line. It raises that weapon's power. |
   | Melee crit | Only while the melee weapon is Daggers. Those add 15%, so this reads 20%. Ranged shots stay at 5%. |
-  | Melee speed, Ranged speed | How often that weapon type swings. A roll named Attack Speed does not change this. |
+  | Melee swing, Ranged swing | How often that weapon type swings. A roll named Attack Speed does not change this. It raises that weapon's power. |
   | Relic damage | The worn relic's Relic Damage roll. It raises that relic's damage. |
   | Cooldown | The worn relic's Cooldown Reduction roll. It shortens that relic's cooldown. |
 
   In the rift, a hit still scales with the Depth. Melee and Ranged say how far those weapons sit above a normal weapon. Bonus HP and Armor are added on top of the Depth's own hit points. A higher number on You is a stronger next fight. It is not the damage printed on a slime.
 
-  A Crit Chance roll and an Attack Speed roll raise that weapon's Melee or Ranged number. They do not change Crit, Melee crit, or the speed lines. That is why a re-roll can move power without moving Crit.
+  A Crit Chance roll and an Attack Speed roll raise that weapon's Melee or Ranged number. They do not change Base crit, Melee crit, or the swing lines. That is why a re-roll can move power without moving Base crit.
 
 - **Later** — The spec also names crit damage as its own stat, area damage, elemental bonus, damage to elites, all-resist, dodge, life per hit, move speed, Soul gain, magic find, and lantern efficiency. None of those are rolled or shown yet. Crit damage is a flat half-again in the fight, from `tuning.json`, with no gear roll. Glyphs, Charms, and Paragon are not on this sheet.
 
@@ -112,8 +112,8 @@ Each entry has:
 
 - **Meets** — the first full bag, or the first piece that is worse than what is worn.
 - **Say** — "Salvage turns a piece into materials. What you are wearing cannot be salvaged. Raise spends Dust and Anula to push the item level up, and it stops at your best Depth plus 10."
-- **Page** — Common pays 5 Dust. Rare pays 2 Facets. Unique pays 1 Echo, asks first, and writes that signature into the Codex. Raising one level starts at 8 Dust and 10 Anula, then grows for each level above 11. The button says what it costs, or "Needs Depth N" when the piece is already at the cap. Auto-salvage is off until toggled. It can take commons, then rares. It never takes a Unique, a worn piece, a locked piece, or a favorite.
-- **Later** — Undo, a salvage preview, and Equip Best are spec quality-of-life, not this screen.
+- **Page** — The hamlet smith lists the bag, and each row can be salvaged, raised, re-rolled, or transmuted. Smith on a bag row opens that one piece. Common pays 5 Dust. Rare pays 2 Facets. Unique pays 1 Echo, asks first, and writes that signature into the Codex. Raising one level starts at 8 Dust and 10 Anula, then grows for each level above 11. The button says what it costs, or "Needs Depth N" when the piece is already at the cap. Auto-salvage is off until toggled. Turning it on asks before it breaks anything, and the line under the toggles says what those pieces become. Undo puts the last salvage back until you leave the smith or the bag. It never takes a Unique, a worn piece, a locked piece, or a favorite.
+- **Later** — Equip Best is spec quality-of-life, not this screen.
 
 ### Re-roll, craft, transmute
 
@@ -122,20 +122,34 @@ Each entry has:
 - **Page** — Re-roll is Facets on a Rare and Echoes on a Unique. The first prices are 4 Facets and 2 Echoes, then 8, 16, and so on for that item only. Commons have a roll and no re-roll. Craft costs 8 Facets and the button says so. It makes a Rare at the same item-level cap as Raise, with random rolls for the chosen slot. The type has to match the slot. Transmute costs 12 Echoes, keeps the item if it was equipped, and resets that piece's re-roll count. A full bag refuses the craft before the Facets are spent, and it says "The bag is full."
 - **Later** — Re-rolling every line at once, craftable rarity above Rare, and a re-roll discount from the smith's building tier are not in this build.
 
+## Apothecary
+
+- **Meets** — best Depth 2, on a card over the hamlet. Before that, the card says it opens at Depth 2.
+- **Say** — "This is the potion the fight already drinks. It heals a bit over half your health. Three charges, and one comes back each wave."
+- **Page** — The card and a long-press on the potion say the heal, the charges, and the wait. Those numbers live in `tuning.json`. The potion starts full each rift. The fight drinks it below 35% HP, and the potion button does the same thing. There is no second potion and no upgrade.
+- **Later** — Building tiers that change the potion are spec, not this cottage.
+
+## Map Room
+
+- **Meets** — best Depth 5. Before that, the door says it opens at Depth 5.
+- **Say** — "Send the hero to an Easy or Fair Depth. They keep walking while the app is closed. Eight hours is the longest they stay out."
+- **Page** — One expedition at a time. The Depth starts a step under your best and can be any Depth you have reached. Hard and Deadly cannot be sent. Sending times three clears of that Depth, then the hero leaves. Coming back pays finished rifts at 60% of the time you were away, and never more than eight hours. A clock that jumps backward pays nothing for that jump. If the worn gear changed, or the Depth is no longer Easy or Fair, the trip stops after at most one clear's worth of time. What came home uses the same result as a rift: equip the upgrades, salvage the downs, then close. Deep Rifts are never sent.
+- **Later** — Auto-Delve and Lantern Mode are not this room.
+
 ## Stash House
 
-- **Meets** — best Depth 8, the cottage south of the path. Before that, the door says it opens at Depth 8.
+- **Meets** — best Depth 8, the cottage south of the path. Before that, a card over the hamlet says it opens at Depth 8.
 - **Say** — "The bag holds 40. The stash holds 100. Move a piece either way. What you are wearing stays worn."
 - **Page** — Both piles show the same rolls the Bag shows. Equipped pieces have no move button. A full stash says "The stash is full." A full bag says "The bag is full." when something tries to come back.
 - **Later** — The spec grows the stash with the building's tier, up to 400. This cottage is the 100-cap room only.
 
 ## Library
 
-- **Meets** — best Depth 3. Before that, the door says it opens at Depth 3.
+- **Meets** — best Depth 3. Before that, a card over the hamlet says it opens at Depth 3.
 - **Say** — "These three rules are already running the fight. Change a rule and the next rift says the new line."
 - **Page** — There are three rules and no fourth. A rule is one condition, then an action: the potion, or a relic. The conditions are Always, HP below a percent, an elite within some tiles, a count of enemies within some tiles, Charge at least a number, the target beyond some tiles, the target is an elite, and the shield is down. The + and − buttons nudge the number on the rules that have one. The rift prints the same sentence, such as "Tactic 2: always → Lantern Ward". The starter three are: drink below 35% HP, Ward when an elite is within 4 tiles, and Ember Flask when 5 or more enemies are within 2 tiles. A potion rule set to Always still waits until the hero is hurt.
 - **Later** — Slots toward 10, AND/OR, and hold-until are spec unlocks. They are not in this Library.
 
 ## What a tutorial should not say yet
 
-Expeditions, Auto-Delve, Lantern Mode, Paragon, Charms, extra loadouts, Glyphs, the Reliquary's extra signatures, Wanderer friendship, and the buildings listed under The hamlet. The first ten minutes the spec describes — one Delve, then a Relic, then reading the three rules — can be written from The well, The fight, A drop, You, and Library. The smith's re-roll is the evening lesson, after the player has a Rare they want to keep.
+Auto-Delve, Lantern Mode, Paragon, Charms, extra loadouts, Glyphs, the Reliquary's extra signatures, Wanderer friendship, and the buildings listed under The hamlet. The Apothecary and the Map Room are in once their Depths are reached; the first ten minutes the spec describes — one Delve, then a Relic, then reading the three rules — can be written from The well, The fight, A drop, You, and Library. The smith's re-roll is the evening lesson, after the player has a Rare they want to keep.

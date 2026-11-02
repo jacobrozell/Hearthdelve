@@ -294,15 +294,15 @@ public enum HeroSheet {
         let bonus = worn.bonusHP + HeroProgress.bonusHP(level: level, perLevel: perLevelHP)
         rows.append(SheetLine(id: "hp", name: "Bonus HP", value: NumberFormat.short(bonus)))
         rows.append(SheetLine(id: "armor", name: "Armor", value: NumberFormat.short(worn.armor)))
-        rows.append(SheetLine(id: "crit", name: "Crit", value: AffixFormat.percent(baseCrit)))
+        rows.append(SheetLine(id: "crit", name: "Base crit", value: AffixFormat.percent(baseCrit)))
         if innateCrit > 0.000_001 {
             rows.append(SheetLine(id: "meleeCrit", name: "Melee crit", value: AffixFormat.percent(baseCrit + innateCrit)))
         }
         if let meleeRate {
-            rows.append(SheetLine(id: "meleeRate", name: "Melee speed", value: AffixFormat.perSecond(meleeRate)))
+            rows.append(SheetLine(id: "meleeRate", name: "Melee swing", value: AffixFormat.perSecond(meleeRate)))
         }
         if let rangedRate {
-            rows.append(SheetLine(id: "rangedRate", name: "Ranged speed", value: AffixFormat.perSecond(rangedRate)))
+            rows.append(SheetLine(id: "rangedRate", name: "Ranged swing", value: AffixFormat.perSecond(rangedRate)))
         }
         let relicDamage = relicAffixes.reduce(0.0) { $1.stat == "relicDamage" ? $0 + $1.value : $0 }
         let haste = relicAffixes.reduce(0.0) { $1.stat == "cooldownReduction" ? $0 + $1.value : $0 }

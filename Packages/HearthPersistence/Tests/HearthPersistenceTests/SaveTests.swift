@@ -67,6 +67,51 @@ final class SaveTests: XCTestCase {
         XCTAssertEqual(loaded.schemaVersion, 1)
     }
 
+    func testAMissingPaceStillStartsAtOne() throws {
+        var object = try JSONSerialization.jsonObject(with: JSONEncoder().encode(SaveGame.newGame())) as! [String: Any]
+        var gameplay = object["gameplay"] as! [String: Any]
+        gameplay.removeValue(forKey: "riftSpeed")
+        gameplay.removeValue(forKey: "lastDepth")
+        gameplay.removeValue(forKey: "lastDeep")
+        object["gameplay"] = gameplay
+        let loaded = try SaveMigrator.load(try JSONSerialization.data(withJSONObject: object))
+        XCTAssertEqual(loaded.gameplay.riftSpeed, 1)
+        XCTAssertEqual(loaded.gameplay.lastDepth, 0)
+        XCTAssertFalse(loaded.gameplay.lastDeep)
+        var again = loaded
+        again.gameplay.riftSpeed = 4
+        again.gameplay.lastDepth = 2
+        again.gameplay.lastDeep = true
+        let round = try SaveMigrator.load(JSONEncoder().encode(again))
+        XCTAssertEqual(round.gameplay.riftSpeed, 4)
+        XCTAssertEqual(round.gameplay.lastDepth, 2)
+        XCTAssertTrue(round.gameplay.lastDeep)
+    }
+
+    func testAMissingExpeditionKillCountStartsAtZero() throws {
+        var save = SaveGame.newGame()
+        save.expeditions = ExpeditionSave(depth: 2, startedAt: 10, meanClearSeconds: 40, loadout: "a,b", normalKills: 4, eliteKills: 1)
+        var object = try JSONSerialization.jsonObject(with: JSONEncoder().encode(save)) as! [String: Any]
+        var expedition = object["expeditions"] as! [String: Any]
+        expedition.removeValue(forKey: "normalKills")
+        expedition.removeValue(forKey: "eliteKills")
+        expedition.removeValue(forKey: "loadout")
+        object["expeditions"] = expedition
+        let loaded = try SaveMigrator.load(try JSONSerialization.data(withJSONObject: object))
+        XCTAssertEqual(loaded.expeditions.depth, 2)
+        XCTAssertEqual(loaded.expeditions.meanClearSeconds, 40)
+        XCTAssertEqual(loaded.expeditions.normalKills, 0)
+        XCTAssertEqual(loaded.expeditions.eliteKills, 0)
+        XCTAssertNil(loaded.expeditions.loadout)
+        XCTAssertEqual(loaded.schemaVersion, 1)
+        object.removeValue(forKey: "expeditions")
+        let older = try SaveMigrator.load(try JSONSerialization.data(withJSONObject: object))
+        XCTAssertNil(older.expeditions.depth)
+        XCTAssertNil(older.expeditions.startedAt)
+        XCTAssertEqual(older.expeditions.normalKills, 0)
+        XCTAssertEqual(older.hero.level, loaded.hero.level)
+    }
+
     func testAMissingRerollCountStartsAtZero() throws {
         var save = SaveGame.newGame()
         XCTAssertTrue(save.inventory.store(sampleItem("a")))

@@ -2,10 +2,13 @@
 
 Drafted 2026-10-28, after the commodity ledger playtest. Spec wins on rules. [`hearthdelve-full-build.plan.md`](../hearthdelve-full-build.plan.md) wins on build order. [`docs/avasia-game3.md`](../docs/avasia-game3.md) wins on saga names.
 
-Do not start the rest of M2. That means Expeditions, Auto-Delve, Lantern Mode, Paragon, Charms, extra loadouts, day and night, weather, the moth, audio, StoreKit, Game Center, iCloud, Glyphs, Wanderer friendship, rooms past Mossy, a fourth tactic slot, and the buildings that are still shells. Do not retune Old Lintel. Do not invent the Biomes table, the Wanderers table, Hale's lines, or the Depth 150+ Warden list.
+Do not start the rest of M2. That means Auto-Delve, Lantern Mode, Paragon, Charms, extra loadouts, day and night, weather, the moth, audio, StoreKit, Game Center, iCloud, Glyphs, Wanderer friendship, rooms past Mossy, a fourth tactic slot, and the buildings that are still shells (Inn, Chandlery, Reliquary, and the rest). The Apothecary and Map Room Expeditions are in. Do not retune Old Lintel. Do not invent the Biomes table, the Wanderers table, Hale's lines, or the Depth 150+ Warden list.
 
 ## Already in
 
+- Apothecary at Depth 2: the potion the fight already drinks. Map Room at Depth 5: one Expedition, Easy or Fair, eight hours, 60% of the time away.
+- Bag sort and filter, New marks, Lock and Favorite. Salvage preview, a confirm before auto-salvage breaks anything, and undo until that screen closes.
+- Result card Retry and Push. The village repeats the last Delve or Deep Rift. Speed is remembered. Leaving the app pauses a live fight.
 - Saga line in Avasia-iOS `docs/SAGA.md` §7. Store name Hearthdelve. Saga title *Avasia: Hearthdelve*.
 - Setting section in the design spec, pointing at `docs/avasia-game3.md`.
 - On-screen words: Anula, Facets, Echoes, Charge, Relay Tower. Craft button shows `Craft · 8 Facets`. Save keys are still `gold`, `shards`, `embers`, `souls`.
@@ -19,11 +22,9 @@ While that save is in hand, the ten-minute script in [`demo-mvp.md`](demo-mvp.md
 
 ## 2. Close the two simulator gaps
 
-Still this slice. No new systems.
-
 - Run Delve until a drop scores above the worn piece. Equip it. The next fight should show the higher piece. The last run had only down and same marks, so this path is unwatched.
 - Salvage a Rare so Facets leave 0. Re-roll one affix. The button should say Facets, then double on that same piece. The last run never spent Facets.
-- Leave the Library and the Stash House locked unless best Depth actually reaches 3 and 8. `Charge ≥ 30` and the Relay Tower name are already unit-tested. Do not force the doors.
+- Leave a cottage locked until best Depth reaches its door. The Apothecary opens at 2, the Library at 3, the Map Room at 5, and the Stash House at 8. `Charge ≥ 30` and the Relay Tower name are already unit-tested. Do not force the doors.
 
 ## 3. Story work that can start without the missing tables
 

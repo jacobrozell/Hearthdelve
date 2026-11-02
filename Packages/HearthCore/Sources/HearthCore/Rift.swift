@@ -91,6 +91,45 @@ public enum DepthRules {
     }
 }
 
+/// The speed button remembers 1×, 2×, or 4×. Anything else is 1×.
+public enum RiftPace {
+    public static func clamp(_ stored: Int) -> Int {
+        switch stored {
+        case 2, 4: stored
+        default: 1
+        }
+    }
+
+    public static func next(_ stored: Int) -> Int {
+        switch clamp(stored) {
+        case 1: 2
+        case 2: 4
+        default: 1
+        }
+    }
+}
+
+/// Result-card and village repeats. A push only exists when that next Depth can actually start.
+public enum RiftRepeat {
+    public static func pushDepth(fought: Int, best: Int, deep: Bool) -> Int? {
+        let next = max(1, fought) + 1
+        let allowed = deep
+            ? DepthRules.deepRiftAllowed(depth: next, best: best)
+            : DepthRules.delveAllowed(depth: next, best: best)
+        return allowed ? next : nil
+    }
+
+    public static func pushTitle(fought: Int, best: Int, deep: Bool) -> String? {
+        guard let next = pushDepth(fought: fought, best: best, deep: deep) else { return nil }
+        return "Push Depth \(next)"
+    }
+
+    public static func againTitle(depth: Int, deep: Bool) -> String? {
+        guard depth >= 1 else { return nil }
+        return deep ? "Deep Rift \(depth)" : "Delve \(depth)"
+    }
+}
+
 public enum LanternRules {
     /// Six minutes at 20 ticks a second.
     public static let burnTicks = 20 * 6 * 60
@@ -414,5 +453,96 @@ public actor RiftActor {
 
     public func recording(contentVersion: String) -> RunRecording {
         world.recording(contentVersion: contentVersion)
+    }
+
+    /// Runs until the rift ends or the tick cap. A death or an unfinished cap is not a clear.
+    public func untilDone(tickCap: Int) -> ClearTiming {
+        var left = max(1, tickCap)
+        while left > 0 {
+            let batch = min(400, left)
+            let snapshot = advance(ticks: batch)
+            left -= batch
+            if snapshot.riftResult != nil || snapshot.heroDown { break }
+        }
+        return world.timing()
+    }
+}
+
+public struct ClearTiming: Equatable, Sendable {
+    public var cleared: Bool
+    public var seconds: Double
+    public var normalKills: Int
+    public var eliteKills: Int
+}
+
+extension RiftWorld {
+    func timing() -> ClearTiming {
+        ClearTiming(
+            cleared: result?.died == false,
+            seconds: Double(sim.tick) / 20,
+            normalKills: normalKills,
+            eliteKills: eliteKills
+        )
+    }
+}
+
+/// Offline Expeditions. The cap is 8 hours. Loot is 60% of the clears that fit in the time away.
+public enum ExpeditionRules {
+    public static let capSeconds = 8.0 * 60 * 60
+    public static let efficiency = 0.6
+    public static let sampleCount = 3
+
+    public static func canSend(_ band: DifficultyBand) -> Bool {
+        band == .easy || band == .fair
+    }
+
+    /// Best Depth minus 10%, never below 1 and never above best.
+    public static func defaultDepth(best: Int) -> Int {
+        let best = max(1, best)
+        let dropped = Int((Double(best) * 0.9).rounded(.down))
+        return min(best, max(1, dropped))
+    }
+
+    public static func elapsed(leftAt: Double, now: Double) -> Double {
+        max(0, now - leftAt)
+    }
+
+    /// A loadout that is no longer Easy or Fair keeps at most one clear of time, then stops.
+    public static func creditedAway(away: Double, cap: Double, mean: Double, stillFair: Bool) -> Double {
+        let away = max(0, away)
+        let capped = min(away, max(0, cap))
+        if stillFair { return capped }
+        if away <= 0 || mean <= 0 { return 0 }
+        return min(capped, mean)
+    }
+
+    public static func riftCount(away: Double, cap: Double, mean: Double) -> Double {
+        guard mean > 0, away > 0 else { return 0 }
+        return (min(max(0, away), max(0, cap)) / mean).rounded(.down) * efficiency
+    }
+
+    public static func grantedRifts(_ count: Double) -> Int {
+        max(0, Int(count.rounded(.down)))
+    }
+
+    public static func sample(_ runs: [ClearTiming]) -> (seconds: Double, normalKills: Int, eliteKills: Int)? {
+        let clears = runs.filter(\.cleared)
+        guard clears.isEmpty == false else { return nil }
+        let seconds = clears.reduce(0.0) { $0 + $1.seconds } / Double(clears.count)
+        guard seconds > 0 else { return nil }
+        let normals = clears.reduce(0) { $0 + $1.normalKills } / clears.count
+        let elites = clears.reduce(0) { $0 + $1.eliteKills } / clears.count
+        return (seconds, normals, elites)
+    }
+
+    public static func duration(_ seconds: Double) -> String {
+        let whole = max(0, Int(seconds.rounded()))
+        if whole < 60 { return "\(whole)s" }
+        let minutes = whole / 60
+        if minutes < 60 { return "\(minutes) min" }
+        let hours = minutes / 60
+        let remain = minutes % 60
+        if remain == 0 { return "\(hours)h" }
+        return "\(hours)h \(remain)m"
     }
 }

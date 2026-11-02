@@ -250,6 +250,46 @@ public struct ExpeditionSave: Codable, Sendable, Equatable {
     public var depth: Int?
     public var startedAt: Double?
     public var meanClearSeconds: Double?
+    /// Equipped ids when the Expedition was sent. Nil on older files.
+    public var loadout: String?
+    public var normalKills: Int
+    public var eliteKills: Int
+
+    public init(
+        depth: Int?, startedAt: Double?, meanClearSeconds: Double?,
+        loadout: String? = nil, normalKills: Int = 0, eliteKills: Int = 0
+    ) {
+        self.depth = depth
+        self.startedAt = startedAt
+        self.meanClearSeconds = meanClearSeconds
+        self.loadout = loadout
+        self.normalKills = normalKills
+        self.eliteKills = eliteKills
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case depth, startedAt, meanClearSeconds, loadout, normalKills, eliteKills
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        depth = try container.decodeIfPresent(Int.self, forKey: .depth)
+        startedAt = try container.decodeIfPresent(Double.self, forKey: .startedAt)
+        meanClearSeconds = try container.decodeIfPresent(Double.self, forKey: .meanClearSeconds)
+        loadout = try container.decodeIfPresent(String.self, forKey: .loadout)
+        normalKills = try container.decodeIfPresent(Int.self, forKey: .normalKills) ?? 0
+        eliteKills = try container.decodeIfPresent(Int.self, forKey: .eliteKills) ?? 0
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encodeIfPresent(depth, forKey: .depth)
+        try container.encodeIfPresent(startedAt, forKey: .startedAt)
+        try container.encodeIfPresent(meanClearSeconds, forKey: .meanClearSeconds)
+        try container.encodeIfPresent(loadout, forKey: .loadout)
+        try container.encode(normalKills, forKey: .normalKills)
+        try container.encode(eliteKills, forKey: .eliteKills)
+    }
 }
 
 public struct CompanionExpeditionSave: Codable, Sendable, Equatable {
@@ -266,6 +306,41 @@ public struct InnSave: Codable, Sendable, Equatable {
 public struct GameplayPrefs: Codable, Sendable, Equatable {
     public var lootRules: [String]
     public var autoEquip: Bool
+    /// 1, 2, or 4. Older saves omit it and stay at 1×.
+    public var riftSpeed: Int
+    /// Last Depth the gate started. Zero means the village has nothing to repeat.
+    public var lastDepth: Int
+    public var lastDeep: Bool
+
+    public init(lootRules: [String], autoEquip: Bool, riftSpeed: Int = 1, lastDepth: Int = 0, lastDeep: Bool = false) {
+        self.lootRules = lootRules
+        self.autoEquip = autoEquip
+        self.riftSpeed = riftSpeed
+        self.lastDepth = lastDepth
+        self.lastDeep = lastDeep
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case lootRules, autoEquip, riftSpeed, lastDepth, lastDeep
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        lootRules = try container.decode([String].self, forKey: .lootRules)
+        autoEquip = try container.decode(Bool.self, forKey: .autoEquip)
+        riftSpeed = try container.decodeIfPresent(Int.self, forKey: .riftSpeed) ?? 1
+        lastDepth = try container.decodeIfPresent(Int.self, forKey: .lastDepth) ?? 0
+        lastDeep = try container.decodeIfPresent(Bool.self, forKey: .lastDeep) ?? false
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(lootRules, forKey: .lootRules)
+        try container.encode(autoEquip, forKey: .autoEquip)
+        try container.encode(riftSpeed, forKey: .riftSpeed)
+        try container.encode(lastDepth, forKey: .lastDepth)
+        try container.encode(lastDeep, forKey: .lastDeep)
+    }
 }
 
 public struct SaveGame: Codable, Sendable, Equatable {
@@ -345,11 +420,12 @@ public enum SaveMigrator {
         return save
     }
 
-    /// Schema 1 grew bestDepth, runSeed, and hero.bankedGlyphPoints. Older files omit them.
+    /// Schema 1 grew bestDepth, runSeed, hero.bankedGlyphPoints, and expeditions. Older files omit them.
     static func fillingDefaults(_ data: Data) -> Data {
         guard var object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return data }
         if object["bestDepth"] == nil { object["bestDepth"] = 1 }
         if object["runSeed"] == nil { object["runSeed"] = 1 }
+        if object["expeditions"] == nil { object["expeditions"] = [String: Any]() }
         if var hero = object["hero"] as? [String: Any] {
             if hero["bankedGlyphPoints"] == nil { hero["bankedGlyphPoints"] = 0 }
             object["hero"] = hero

@@ -67,6 +67,74 @@ public enum SalvageDecision: Equatable, Sendable {
     case refused(String)
 }
 
+public struct SalvagePreview: Equatable, Sendable {
+    public var commons: Int
+    public var rares: Int
+    public var dust: Double
+    public var shards: Double
+
+    public var sentence: String? {
+        var parts: [String] = []
+        if commons > 0 {
+            let name = commons == 1 ? "Common" : "Commons"
+            let verb = commons == 1 ? "becomes" : "become"
+            parts.append("\(commons) \(name) \(verb) \(SmithRules.price(dust)) Dust.")
+        }
+        if rares > 0 {
+            let name = rares == 1 ? "Rare" : "Rares"
+            let verb = rares == 1 ? "becomes" : "become"
+            parts.append("\(rares) \(name) \(verb) \(SmithRules.price(shards)) Facets.")
+        }
+        guard parts.isEmpty == false else { return nil }
+        return parts.joined(separator: " ")
+    }
+}
+
+/// Bag chips. Upgrades keep the worn piece in view. Rest is everything that is not an upgrade.
+public enum BagFilter: String, Sendable, Equatable, CaseIterable {
+    case all
+    case upgrades
+    case rest
+
+    public var title: String {
+        switch self {
+        case .all: "All"
+        case .upgrades: "Upgrades"
+        case .rest: "Rest"
+        }
+    }
+
+    public func includes(damage: Int, toughness: Int, equipped: Bool) -> Bool {
+        switch self {
+        case .all: true
+        case .upgrades: equipped || damage > 0 || toughness > 0
+        case .rest: equipped == false && damage <= 0 && toughness <= 0
+        }
+    }
+}
+
+/// Slot order, then worn, then any up arrow, then a level mark, then a down arrow.
+public enum BagOrder {
+    private static let slots = ["melee", "ranged", "relic", "helm", "chest", "legs", "boots"]
+
+    public static func tier(damage: Int, toughness: Int, equipped: Bool) -> Int {
+        if equipped { return 0 }
+        if damage > 0 || toughness > 0 { return 1 }
+        if damage == 0 && toughness == 0 { return 2 }
+        return 3
+    }
+
+    public static func before(_ left: (String, Int, Int, Bool, String), _ right: (String, Int, Int, Bool, String)) -> Bool {
+        let leftIndex = slots.firstIndex(of: left.0) ?? slots.count
+        let rightIndex = slots.firstIndex(of: right.0) ?? slots.count
+        if leftIndex != rightIndex { return leftIndex < rightIndex }
+        let leftTier = tier(damage: left.1, toughness: left.2, equipped: left.3)
+        let rightTier = tier(damage: right.1, toughness: right.2, equipped: right.3)
+        if leftTier != rightTier { return leftTier < rightTier }
+        return left.4 < right.4
+    }
+}
+
 public enum RaiseDecision: Equatable, Sendable {
     case raised(itemLevel: Int, dust: Double, gold: Double)
     case refused(String)
@@ -147,6 +215,24 @@ public enum SmithRules {
         }
     }
 
+    public static let keptPiece = "Locked and favored pieces stay."
+    public static let materialsSpent = "Those materials are already spent."
+
+    /// What the current loot rules would break down. Worn, locked, favored, and Unique pieces are left out.
+    public static func preview(items: [SalvageCandidate], rules: [String], tuning: SmithTuning) -> SalvagePreview {
+        var preview = SalvagePreview(commons: 0, rares: 0, dust: 0, shards: 0)
+        for pick in autoSalvage(items: items, rules: rules, tuning: tuning) {
+            if pick.yield.shards > 0 {
+                preview.rares += 1
+                preview.shards += pick.yield.shards
+            } else {
+                preview.commons += 1
+                preview.dust += pick.yield.dust
+            }
+        }
+        return preview
+    }
+
     private static func matches(rarity: String, rules: [String]) -> Bool {
         switch rarity {
         case "common": rules.contains(salvageCommon)
@@ -155,8 +241,12 @@ public enum SmithRules {
         }
     }
 
-    public static func salvage(rarity: String, signature: String?, equipped: Bool, confirmed: Bool, tuning: SmithTuning) -> SalvageDecision {
+    public static func salvage(
+        rarity: String, signature: String?, equipped: Bool, confirmed: Bool, tuning: SmithTuning,
+        locked: Bool = false, favorite: Bool = false
+    ) -> SalvageDecision {
         if equipped { return .refused("equipped") }
+        if locked || favorite { return .refused("kept") }
         switch rarity {
         case "unique":
             if confirmed == false { return .needsConfirmation }

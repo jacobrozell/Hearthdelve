@@ -18,7 +18,7 @@ todos:
     content: "M1 playable: Mossy floors, Lantern, Old Lintel, loot, loadout, local save. Session gate and the physical-phone cold launch are unsigned."
     status: in_progress
   - id: m2-loops
-    content: "Evening slice is in: smith re-roll, craft, and transmute; stash of 100; three-rule Library. Expeditions, Paragon, and the rest of M2 are not started. Loop gate open."
+    content: "Evening slice is in, plus the Apothecary potion sheet and Map Room Expeditions. Paragon and the rest of M2 are not started. Loop gate open."
     status: in_progress
   - id: m3-launch
     content: "M3: five biomes, full catalogs, Bestiary cards, iCloud, Game Center, telemetry, StoreKit, audio, ship gate"
@@ -31,11 +31,11 @@ isProject: false
 
 # Hearthdelve full execution plan
 
-## Status for the next agent (2026-10-28)
+## Status for the next agent (2026-11-01)
 
 **End goal.** Ship the spec in this order. M3 is the launch (five biomes, the buildings a launch player can touch, iCloud, Game Center, telemetry, StoreKit, audio, ship gate). M4 is everything the spec defers (Glyphs, advanced Tactics, companion Expeditions, friendships, Seasons, the Inn card game, supporter pack, expansion, iPad landscape). Spec wins on rules. This plan wins on build order.
 
-**Now.** Version 0.1.0 (1), branch `main`, not submitted. The M2 evening slice sits on the Mossy demo: the smith re-rolls one affix, crafts a Rare, and transmutes a Unique; the Stash House holds 100; the Library edits the three rules the fight already runs. `HEAD` is still `3a4e9db`. Review fixes, gear slots, auto-salvage, the HUD polish, and this slice are uncommitted. Do not claim a physical-phone pass.
+**Now.** Version 0.1.0 (1), branch `main`, not submitted. The M2 evening slice sits on the Mossy demo: the smith re-rolls one affix, crafts a Rare, and transmutes a Unique; the Stash House holds 100; the Library edits the three rules the fight already runs. The Apothecary (Depth 2) shows the potion the fight already drinks. The Map Room (Depth 5) sends one Expedition to an Easy or Fair Depth, capped at eight hours and paid at 60%. The playable loop also sorts and filters the bag, locks and favorites pieces, previews salvage and can undo it, retries or pushes from the result, repeats the last run from the village, remembers speed, and pauses when the app leaves. `HEAD` is still `3a4e9db`. Review fixes, gear slots, auto-salvage, the HUD polish, the evening slice, the polish, the Apothecary, and Expeditions are uncommitted. Do not claim a physical-phone pass.
 
 **Playable**
 
