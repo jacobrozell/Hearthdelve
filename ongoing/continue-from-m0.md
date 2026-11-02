@@ -46,7 +46,7 @@ Session defaults were empty at the start of this run. Set them once per session,
 
 1. `session_show_defaults` on `project-0-personal-XcodeBuildMCP`.
 2. If the project, scheme, or simulator is missing, `session_set_defaults` with:
-   - `projectPath`: `/Users/jrozell/Desktop/personal/Hearthdelve/Hearthdelve.xcodeproj`
+   - `projectPath`: `/Users/jrozell/Desktop/personal/apps/Hearthdelve/Hearthdelve.xcodeproj`
    - `scheme`: `Hearthdelve`
    - `simulatorName`: `iPhone 16e`
    - `simulatorId`: `4FAEAB2B-3822-45DC-A65D-B48D68AF2F31`
